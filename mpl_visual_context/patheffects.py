@@ -8,6 +8,9 @@ class ColorModifyStroke(AbstractPathEffect):
     def apply_to_color(self, c):
         pass
 
+    def __or__(self, other):
+        return MultiColorStroke(self, other)
+
     def draw_path(self, renderer, gc, tpath, affine, rgbFace):
         """Draw the path with updated gc."""
         gc0 = renderer.new_gc()
@@ -24,6 +27,15 @@ class ColorModifyStroke(AbstractPathEffect):
             gc0, tpath, affine, rgbFace)
 
 
+class MultiColorStroke(ColorModifyStroke):
+    def __init__(self, *sl):
+        self._pe_list = sl
+
+    def apply_to_color(self, c):
+        for pe in self._pe_list:
+            c = pe.apply_to_color(c)
+
+        return c
 
 class HLSModifyStroke(ColorModifyStroke):
     """A line based PathEffect which re-draws a stroke."""
