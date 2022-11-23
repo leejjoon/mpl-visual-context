@@ -39,13 +39,15 @@ if True:
     norm.vmax = max(y2)
 
     f1 = ax.fill_between(x, y1=y)
-    f1.set_ec("k")
-    pe_f1 = GradientEffect("up", f1, norm=norm)
+    ax.plot(x, y)
+    # f1.set_ec("k")
+    pe_f1 = GradientEffect("up", f1, alpha="up", norm=norm)
     f1.set_path_effects([pe_f1])
 
     f2 = ax.fill_between(x+ 100, y1=0.05+y2, y2=0.05)
-    f2.set_ec("k")
-    pe_f2 = GradientEffect("up", f2, norm=norm)
+    ax.plot(x+100, 0.05+y2)
+    # f2.set_ec("k")
+    pe_f2 = GradientEffect("up", f2, alpha="right", norm=norm)
     f2.set_path_effects([pe_f2])
 
 

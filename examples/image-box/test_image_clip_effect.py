@@ -22,6 +22,7 @@ df_2016["month"] = df_2016["date"].apply(lambda s: int(s.split("-")[1]))
 import calendar 
 import cmocean as cmo
 
+sns.set_theme()
 
 fig, ax = plt.subplots(1, 1, num=1, clear=True)
 
@@ -41,7 +42,7 @@ from mpl_selector import categorical_selector
 
 # gs = s.guess_category_from_legend()
 gs = categorical_selector(ax, "legend")
-ax.set_xlim(-40, 40)
+ax.set_xlim(-18, 38)
 
 def get_heights(artists):
     yy = []
@@ -64,56 +65,81 @@ def spready(artists, yindices, dy=None):
     return yoffsets
 
     # gs.categories, gs.select("Poly")):
-dy = 0.005
-
-yindices = np.array([int(c) for c in gs.categories])
 
 polys = gs.select("Poly")
 
+# dy = 0.005
+dy = 0.5 * max([p.get_datalim(p.axes.transData).height for p in polys])
+
+yindices = np.array([int(c) for c in gs.categories])
+
+polys.set("clip_on", False)
+
 yoffsets = spready(polys, yindices, dy=-dy)
-ax.set_ylim(min(yoffsets)-0.1*dy, max(yoffsets)+1.5*dy)
+
+ax.set_ylim(min(yoffsets)-0.01*dy, max(yoffsets)+0.99*dy)
 
 month_names = [calendar.month_name[int(i)] for i in gs.categories]
 ax.set_yticks(yoffsets, labels=month_names)
-# for tck in ax.get_yticklabels():
-#     print(tck)
-
-#     ax.annotate(calendar.month_name[int(i)], (0.2, y), ha="right", va="bottom",
 
 data = np.linspace(0, 1, 256).reshape((1, 256))
 bbox_image = TransformedBboxImage(data,
                                   extent=[-29, 0, 40, 1],
-                                  coords=("data", "axes fraction"),
-                                  cmap="cmo.thermal")
+                                  coords=("data", "figure fraction"),
+                                  cmap="cmo.thermal",
+                                  clip_box=fig.bbox)
 
-ax.add_artist(bbox_image)
+# ax.add_artist(bbox_image)
+# bbox_image.set_clip_box(fig.bbox)
 
-pe = [ImageClipEffect(bbox_image, remove_from_axes=True)]
+# pe = [ImageClipEffect(bbox_image, remove_from_axes=True)]
+pe = [ImageClipEffect(bbox_image, ax=ax)]
+polys.set("path_effects", pe)
 
 # df = df_2016.query(f"month=={i}")
 
-polys.set("path_effects", pe)
 
 ax.grid(True, alpha=0.5)
 ax.set_axisbelow(True)
 
-ax.set_xticks([-20, 0, 20, 40])
+ax.set_xticks([-15, 0, 15, 30])
 # ax.set_yticks(yoffsets)
 
-if True:
+from mpl_visual_context.axes_helper import get_axislines
+
+def add_category_labels():
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+    divider = make_axes_locatable(ax)
+
+    axc = divider.append_axes("left", 1.2, pad=0., sharey=ax)
+    axc.grid(True, alpha=0.5)
+    axc.set_xticks([])
+    axc.set_facecolor("0.85")
+
+    axislines = get_axislines(axc)
+    axislines[:].spine.set_visible(False)
+    axislines[:].toggle(all=False)
+
     for i, y in zip(gs.categories, yoffsets):
-        ax.annotate(calendar.month_name[int(i)], (0.2, y), ha="right", va="bottom",
-                    xycoords=("axes fraction", "data"),
-                    fontsize="large",
-                    # fontdict={"fontsize":"large"},
-                    )
+        axc.annotate(calendar.month_name[int(i)], (0.5, y),
+                     xytext=(0, 3),
+                     ha="center", va="bottom",
+                     xycoords=("axes fraction", "data"),
+                     textcoords="offset points",
+                     fontsize="large",
+                     # color="w",
+                     # fontdict={"fontsize":"large"},
+                     )
+
+add_category_labels()
+
+if True:
 
     ax.tick_params(axis="x", direction="inout", color="lightgray", 
                    length=5, width=2, labelsize="large")
 
     ax.set_xlabel("Mean Temperature (℃)", fontdict={"fontsize":"large"})
 
-    from mpl_visual_context.axes_helper import get_axislines
     axislines = get_axislines(ax)
 
     axislines[:].spine.set_visible(False)
@@ -121,5 +147,6 @@ if True:
 
     ax.legend_.remove()
 
+# ax.set_facecolor("y")
 plt.tight_layout()
 plt.show()

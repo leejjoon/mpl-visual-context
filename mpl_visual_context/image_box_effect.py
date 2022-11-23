@@ -113,21 +113,26 @@ class TR:
 
 
 class ImageClipEffect(AbstractPathEffect):
-    def __init__(self, im, remove_from_axes=True, draw_path=True):
-        if im.axes is None:
+    def __init__(self, im, ax=None, remove_from_axes=False, draw_path=True):
+        if im.axes is None and ax is None:
             raise ValueError("im.axes should not be None")
 
+        ax = ax if ax is not None else im.axes
+
         if remove_from_axes:
-            ax = im.axes
             im.remove()
-            im.axes = ax
+
+        im.axes = ax
 
         self.im = im
 
     def draw_path(self, renderer, gc, tpath, affine, rgbFace):
         """Draw the path with updated gc."""
 
+        # print("#", self.im.get_clip_box())
+        # print("#", self.im.get_clip_box())
         self.im.set_clip_path(tpath, transform=affine)
+        self.im.set_clip_box(self.im.axes.figure.bbox)
         self.im.draw(renderer)
 
         if self.draw_path:
@@ -135,20 +140,67 @@ class ImageClipEffect(AbstractPathEffect):
                 gc, tpath, affine, None)
 
 
+def get_data_from_dir(dir, bbox=None, alpha=None):
+    if bbox is None:
+        bbox = Bbox.from_extents([0, 0, 1, 1])
+
+    if isinstance(dir, str):
+        if dir in ["up", "right"]:
+            c0 = 0
+            c1 = bbox.height
+        else:
+            c0 = bbox.height
+            c1 = 0
+
+        if dir in ["up", "down"]:
+            data = np.linspace(c0, c1, 256).reshape((256, 1))
+        else:
+            data = np.linspace(c0, c1, 256).reshape((1, 256))
+    else:
+        data = dir
+
+    if isinstance(alpha, str):
+        if alpha in ["up", "down", "left", "right"]:
+            if alpha in ["up", "right"]:
+                a0, a1 = 0, 1
+            else:
+                a0, a1 = 1, 0
+
+            if alpha in ["up", "down"]:
+                alpha = np.linspace(a0, a1, 256).reshape((256, 1))
+            else:
+                alpha = np.linspace(a0, a1, 256).reshape((1, 256))
+
+    new_shape = np.broadcast_shapes(alpha.shape, data.shape)
+    data = np.broadcast_to(data, new_shape)
+    alpha = np.broadcast_to(alpha, new_shape)
+
+    return data, alpha
+
+
 class TransformedBboxImage(BboxImage):
 
     def __init__(self, data, extent=None, coords="data", axes=None,
+                 alpha=None,
                  **im_kw):
         self.coords = coords
         if extent is None:
             extent = [0, 0, 1, 1]
         self.bbox_orig = Bbox.from_extents(extent)
+
+
         BboxImage.__init__(self, Bbox([[0, 0], [0, 0]]), origin="lower",
                            interpolation="none",
                            transform=mtransforms.IdentityTransform(),
                            **im_kw)
+
+        data, alpha = self._convert_data(data, alpha=alpha)
         self.set_data(data)
+        self.set_alpha(alpha)
         self.axes = axes
+
+    def _convert_data(self, data, alpha=None):
+        return data, alpha
 
     def draw(self, renderer):
         tr = TR.get_xy_transform(renderer, self.coords, axes=self.axes)
@@ -160,12 +212,16 @@ class TransformedBboxImage(BboxImage):
         else:
             axes = self.axes
 
-        if axes is not None:
-            self.set_clip_box(axes.bbox)
+        # if axes is not None:
+        #     self.set_clip_box(axes.bbox)
 
         # self.im.set_clip_path(tpath, transform=affine)
         BboxImage.draw(self, renderer)
 
+class GradientBboxImage(TransformedBboxImage):
+    def _convert_data(self, data, alpha=None):
+        data, alpha = get_data_from_dir(data, alpha=alpha)
+        return data, alpha
 
 def get_bbox_image(data, extent=None, coords="data",
                    c0=0, c1=1., axes=None, **im_kw):
@@ -269,17 +325,7 @@ class GradientEffect(TransformedBboxImage):
         # AFAIK, the get_datalim is only available for collections.
         bbox = artist.get_datalim(ax.transData)
 
-        if dir in ["up", "right"]:
-            c0 = 0
-            c1 = bbox.height
-        else:
-            c0 = bbox.height
-            c1 = 0
-
-        if dir in ["up", "down"]:
-            data = np.linspace(c0, c1, 256).reshape((256, 1))
-        else:
-            data = np.linspace(c0, c1, 256).reshape((1, 256))
+        data, alpha = get_data_from_dir(dir, bbox, alpha=alpha)
 
         x1, y1, x2, y2 = bbox.extents
         im = self.image = AxesImage(ax,
