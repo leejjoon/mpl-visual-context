@@ -1,3 +1,4 @@
+from matplotlib import transforms
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
@@ -10,6 +11,7 @@ from matplotlib.artist import Artist
 from matplotlib.image import Bbox, BboxImage, AxesImage
 from matplotlib.transforms import TransformedBbox
 
+from .mpl_fix import CollectionFix
 
 class TR:
     def __init__(self):
@@ -39,6 +41,8 @@ class TR:
                 raise RuntimeError("Unknown return type")
         elif isinstance(s, Artist):
             bbox = s.get_window_extent(renderer)
+            if not np.any(np.isfinite(bbox.get_points())):
+                bbox = CollectionFix.get_window_extent(s)
             return BboxTransformTo(bbox)
         elif isinstance(s, BboxBase):
             return BboxTransformTo(s)
@@ -171,9 +175,10 @@ def get_data_from_dir(dir, bbox=None, alpha=None):
             else:
                 alpha = np.linspace(a0, a1, 256).reshape((1, 256))
 
-    new_shape = np.broadcast_shapes(alpha.shape, data.shape)
-    data = np.broadcast_to(data, new_shape)
-    alpha = np.broadcast_to(alpha, new_shape)
+    if isinstance(alpha, np.ndarray):
+        new_shape = np.broadcast_shapes(alpha.shape, data.shape)
+        data = np.broadcast_to(data, new_shape)
+        alpha = np.broadcast_to(alpha, new_shape)
 
     return data, alpha
 
