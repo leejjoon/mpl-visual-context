@@ -117,7 +117,7 @@ class TR:
 
 
 class ImageClipEffect(AbstractPathEffect):
-    def __init__(self, im, ax=None, remove_from_axes=False, draw_path=True):
+    def __init__(self, im, ax=None, remove_from_axes=False):
         if im.axes is None and ax is None:
             raise ValueError("im.axes should not be None")
 
@@ -135,10 +135,6 @@ class ImageClipEffect(AbstractPathEffect):
 
         self.im.set_clip_path(tpath, transform=affine)
         self.im.draw(renderer)
-
-        if self.draw_path:
-            renderer.draw_path(
-                gc, tpath, affine, None)
 
 
 def get_gradient_array_from_dir(dir: str, height: int):

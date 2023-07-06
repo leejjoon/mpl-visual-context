@@ -8,4 +8,12 @@
 # See https://github.com/pypa/setuptools/issues/1724#issuecomment-627241822
 from ._version import __version__
 
-from .example import example_function
+# from .example import example_function
+
+import colorsys
+from matplotlib.colors import to_rgb
+
+def check_dark(c):
+    c_rgb = to_rgb(c)
+    c_hls = colorsys.rgb_to_hls(*c_rgb)
+    return c_hls[1] < 0.5
