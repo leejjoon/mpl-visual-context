@@ -1,3 +1,4 @@
+from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,7 +32,7 @@ sns.kdeplot(df_2016, # ["meantempm"],
             hue="month",
             ax=ax,
             fill=True, linewidth=2,
-            ec="none",
+            # ec="none",
             )
 
 ax.set_xlim(-18, 38)
@@ -63,168 +64,113 @@ ax.set_ylim(min(yoffsets), max(yoffsets) + dy)
 
 ax.set_yticks(yoffsets, labels=month_names)
 
-
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-
-# # Create an inset outside the axes
-# axins = inset_axes(ax, width=1, height="100%",
-#                    bbox_to_anchor=(0., 0, 0, 1),
-#                    bbox_transform=ax.transAxes, loc=1, borderpad=0)
-# axins.tick_params(left=False, right=True, labelleft=False, labelright=True)
-
-# ticks_to_table(ax, "left", o1=0, o2=1)
+ax.set_ylabel("")
 
 from mpl_visual_context.axes_helper import get_axislines
-
-from mpl_visual_context.axes_panel import YTickLabelPanel
+from mpl_visual_context.axes_panel import YTickLabelPanel # YLabelPanel
 from mpl_visual_context.axes_panel import XTickLabelPanel, XLabelPanel
 
+def axis_to_panels(divider, axis="both", which=None):
+    if axis not in ["x", "y", "both"]:
+        raise ValueError()
+
+    axis_to_convert = axis
+    if which is None:
+        which = ["ticks", "label"]
+
+    ax = divider._axes
+
+    if axis_to_convert == "x":
+        _axis = [("x", ax.xaxis)]
+    elif axis_to_convert == "y":
+        _axis = [("y", ax.yaxis)]
+    else:
+        _axis = [("x", ax.xaxis),
+                 ("y", ax.yaxis)]
+
+    panels = {}
+    # divider = make_axes_locatable(ax)
+    for axisname, axis in _axis:
+        if axis.get_visible():
+            dir = dict(x="bottom", y="left")[axisname]
+            ticklabels = axis.get_ticklabels()
+            for w in which:
+                if ( "ticks" in w
+                     and ticklabels
+                     and any([t.get_visible() for t in ticklabels]) ):
+                    print(axisname, "tick")
+                    klass = dict(x=XTickLabelPanel, y=YTickLabelPanel)[axisname]
+                    panels[f"{axisname}-ticklabels"] = klass(ax, divider=divider)
+                    axis.set_tick_params(**{f"label{dir}": False})
+                if ( "label" in w
+                     and axis.label.get_visible()
+                     and axis.label.get_text()):
+                    print(axisname, "label")
+                    klass = dict(x=XLabelPanel, y=XLabelPanel)[axisname]
+                    panels[f"{axisname}-label"] = klass(ax, divider=divider)
+                    axis.label.set_visible(False)
+                print("XXX", ax.get_xticks())
+
+    for k, panel in panels.items():
+        panel.axislines[:].spine.set_visible(False)
+        panel.axislines[:].toggle(all=False)
+        # panel.ax.patch.set_color("b")
+
+    return panels
+
+
 if True:
-    tla_y = YTickLabelPanel(ax)
-    tla_y.axislines[:].spine.set_visible(False)
-    tla_y.axislines[:].toggle(all=False)
+    divider = make_axes_locatable(ax)
+    panels = axis_to_panels(divider, axis="y")
+    # panels_x = axis_to_panels(divider, axis="x", which=["ticks"])
+    panels_x = axis_to_panels(divider, axis="x", which=["label", "ticks"])
+    # panels_x = axis_to_panels(divider, axis="x")
+    panels.update(panels_x)
 
-    tla_y.set_va("bottom")
-    # tla.set_ha("left")
-    # tla.set_xpos(0.)
-    # tla.set_offset((5, 3))
+    pe = HLSModifyStroke(dh=0, l=0.9)
+    for panel in panels.values():
+        panel.ax.patch.set_path_effects([pe])
 
-    tla_y.set_offset((0, 3))
-
-    pe = HLSModifyStroke(dh=0, s="-30%")
-    tla_y.ax.patch.set_path_effects([pe])
-
-    tla_x = XTickLabelPanel(ax, divider=tla_y.divider)
-    tla_x.axislines[:].toggle(all=False)
-    tla_x.axislines["bottom"].toggle(label=True)
-    tla_x.axislines[:].spine.set_visible(False)
-
-    tla_x.ax.set_xlabel(ax.get_xlabel())
-    tla_x.set_offset((0, -2))
-
-    # tla_x.ax.patch.set_path_effects([pe])
-
-    tla_x2 = XLabelPanel(ax, divider=tla_y.divider)
-    tla_x2.axislines[:].spine.set_visible(False)
-    tla_x2.ax.patch.set_path_effects([pe])
-
-    ax.set_xlabel("")
-
-# def add_category_labels():
-#     divider = make_axes_locatable(ax)
-
-#     max_width = MaxWidth([])
-#     axc = divider.append_axes("left", max_width + Fixed(0.2),
-#                               pad=0, sharey=ax)
-#     # axc.grid(True, alpha=0.5)
-#     axc.set_xticks([])
-#     # axc.set_facecolor("0.85")
-
-#     axislines = get_axislines(axc)
-#     axislines[:].spine.set_visible(False)
-#     axislines[:].toggle(all=False)
-
-#     for i, y in zip(gs.categories, yoffsets):
-#         a = axc.annotate(calendar.month_name[int(i)], (0.5, y),
-#                          xytext=(0, 0),
-#                          # ha="center", va="bottom",
-#                          ha="center", va="center",
-#                          xycoords=("axes fraction", "data"),
-#                          textcoords="offset points",
-#                          fontsize="large",
-#                          # color="w",
-#                          # fontdict={"fontsize":"large"},
-#                          )
-#         max_width.add_artist(a)
-
-#     return axc
-
-# axc = add_category_labels()
-
-# pe = HLSModifyStroke(dh=0, s="-30%")
-# axc.patch.set_path_effects([pe])
+    panel = panels["y-ticklabels"]
+    panel.set_va("bottom")
+    panel.set_offset((0, 3))
 
 
-for p in polys:
-    bbox_image = GradientBboxImage("right",
-                                   alpha="up",
+if True:
+    panel = panels["x-label"]
+    bbox_image = GradientBboxImage("right", alpha=0.7,
                                    extent=[0, 0, 1, 1],
                                    # extent=[0, y1, 1, y2],
-                                   coords=("axes fraction", p),
+                                   coords="axes fraction",
                                    cmap="cmo.thermal")
 
-    pe = [ImageClipEffect(bbox_image, ax=ax)]
-    p.set_path_effects(pe)
-    #("path_effects", pe)
+    # pe = [ImageClipEffect(bbox_image, ax=ax)]
+    panel.ax.add_artist(bbox_image)
 
-bbox_image = GradientBboxImage("right",
-                               # alpha="up",
-                               alpha=0.7,
-                               extent=[0, 0, 1, 1],
-                               # extent=[0, y1, 1, y2],
-                               coords="axes fraction",
-                               cmap="cmo.thermal")
+    from matplotlib.patheffects import withStroke
+    for a in panel.annotations:
+        a.set_path_effects([withStroke(foreground="w", linewidth=5,
+                                       alpha=0.7)])
 
-# pe = [ImageClipEffect(bbox_image, ax=ax)]
-tla_x.ax.add_artist(bbox_image)
+    for p in polys:
+        bbox_image = GradientBboxImage("right", alpha="up",
+                                       extent=[0, 0, 1, 1],
+                                       coords=("axes fraction", p),
+                                       cmap="cmo.thermal")
+        bbox_image.set_clip_box(None)
 
-from matplotlib.patheffects import withStroke, Stroke, Normal
-# pe = [withStroke(foreground="gray", linewidth=1.2)]
-pe = [Stroke(foreground="w", linewidth=1.5, alpha=0.5),
-      Stroke(foreground="gray", linewidth=.7, alpha=0.5),
-      Normal()]
+        pe = [ImageClipEffect(bbox_image, ax=ax)]
+        p.set_path_effects(pe)
 
-from mpl_visual_context.pe_value_from_image import ValueFromImage
-pe = [ValueFromImage(bbox_image)]
+    polys.set("ec", "none")
 
-for a in tla_x.annotations:
-    a.set_color("k")
-    a.set_path_effects(pe)
+    # FIXME This does not affect the drawing, but affect the tight_bbox.
+    polys.set("clip_on", False)
 
-# FIXME This does not affect the drawing, but affect the tight_bbox.
-polys.set("clip_on", False)
+    ax.spines["top"].set_visible(False)
 
 
-if True:
-
-    # ax.tick_params(axis="x", direction="inout", color="lightgray", 
-    #                length=5, width=2, labelsize="large")
-
-    axislines = get_axislines(ax)
-
-    axislines[:].spine.set_visible(False)
-    axislines["left"].toggle(all=False)
-
-    ax.legend_.remove()
-
-from matplotlib.transforms import Bbox, BboxTransform
-
-def get_image_data_at_disp_xy(im, x, y, backend=None):
-    """
-    Return the image value at the event position or *None* if the event is
-    outside the image.
-
-    See Also
-    --------
-    matplotlib.artist.Artist.get_cursor_data
-    """
-    disp_extent = im.get_window_extent(backend)
-    # if im.origin == 'upper':
-    #     ymin, ymax = ymax, ymin
-    arr = im.get_array()
-    # disp_extent = Bbox([[xmin, ymin], [xmax, ymax]])
-    array_extent = Bbox([[0, 0], [arr.shape[1], arr.shape[0]]])
-    trans = BboxTransform(boxin=disp_extent, boxout=array_extent)
-    point = trans.transform([x, y])
-    if any(np.isnan(point)):
-        return None
-    j, i = point.astype(int)
-    # Clip the coordinates at array bounds
-    if not (0 <= i < arr.shape[0]) or not (0 <= j < arr.shape[1]):
-        return None
-    else:
-        return arr[i, j]
-
+ax.legend_.remove()
 
 # ax.set_facecolor("y")
 plt.tight_layout()
