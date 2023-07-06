@@ -66,57 +66,11 @@ ax.set_yticks(yoffsets, labels=month_names)
 
 ax.set_ylabel("")
 
-from mpl_visual_context.axes_helper import get_axislines
-from mpl_visual_context.axes_panel import YTickLabelPanel # YLabelPanel
-from mpl_visual_context.axes_panel import XTickLabelPanel, XLabelPanel
+# from mpl_visual_context.axes_helper import get_axislines
+# from mpl_visual_context.axes_panel import YTickLabelPanel # YLabelPanel
+# from mpl_visual_context.axes_panel import XTickLabelPanel, XLabelPanel
 
-def axis_to_panels(divider, axis="both", which=None):
-    if axis not in ["x", "y", "both"]:
-        raise ValueError()
-
-    axis_to_convert = axis
-    if which is None:
-        which = ["ticks", "label"]
-
-    ax = divider._axes
-
-    if axis_to_convert == "x":
-        _axis = [("x", ax.xaxis)]
-    elif axis_to_convert == "y":
-        _axis = [("y", ax.yaxis)]
-    else:
-        _axis = [("x", ax.xaxis),
-                 ("y", ax.yaxis)]
-
-    panels = {}
-    # divider = make_axes_locatable(ax)
-    for axisname, axis in _axis:
-        if axis.get_visible():
-            dir = dict(x="bottom", y="left")[axisname]
-            ticklabels = axis.get_ticklabels()
-            for w in which:
-                if ( "ticks" in w
-                     and ticklabels
-                     and any([t.get_visible() for t in ticklabels]) ):
-                    print(axisname, "tick")
-                    klass = dict(x=XTickLabelPanel, y=YTickLabelPanel)[axisname]
-                    panels[f"{axisname}-ticklabels"] = klass(ax, divider=divider)
-                    axis.set_tick_params(**{f"label{dir}": False})
-                if ( "label" in w
-                     and axis.label.get_visible()
-                     and axis.label.get_text()):
-                    print(axisname, "label")
-                    klass = dict(x=XLabelPanel, y=XLabelPanel)[axisname]
-                    panels[f"{axisname}-label"] = klass(ax, divider=divider)
-                    axis.label.set_visible(False)
-                print("XXX", ax.get_xticks())
-
-    for k, panel in panels.items():
-        panel.axislines[:].spine.set_visible(False)
-        panel.axislines[:].toggle(all=False)
-        # panel.ax.patch.set_color("b")
-
-    return panels
+from mpl_visual_context.axes_panel import axis_to_panels
 
 
 if True:

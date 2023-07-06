@@ -140,6 +140,7 @@ class _LabelPanelBase(_PanelBase):
         max_extent.add_artist(a)
         self.annotations.append(a)
 
+
 class XLabelPanel(_LabelPanelBase):
     def _get_axc_max_extent(self, ax, divider):
         max_height = MaxHeight([])
@@ -152,3 +153,47 @@ class XLabelPanel(_LabelPanelBase):
     def _get_main_label(self):
         s = self.ax_orig.get_xlabel()
         return s
+
+
+def axis_to_panels(divider, axis="both", which=None):
+    if axis not in ["x", "y", "both"]:
+        raise ValueError()
+
+    axis_to_convert = axis
+    if which is None:
+        which = ["ticks", "label"]
+
+    ax = divider._axes
+
+    if axis_to_convert == "x":
+        _axis = [("x", ax.xaxis)]
+    elif axis_to_convert == "y":
+        _axis = [("y", ax.yaxis)]
+    else:
+        _axis = [("x", ax.xaxis),
+                 ("y", ax.yaxis)]
+
+    panels = {}
+    for axisname, axis in _axis:
+        if axis.get_visible():
+            dir = dict(x="bottom", y="left")[axisname]
+            ticklabels = axis.get_ticklabels()
+            for w in which:
+                if ( "ticks" in w
+                     and ticklabels
+                     and any([t.get_visible() for t in ticklabels]) ):
+                    klass = dict(x=XTickLabelPanel, y=YTickLabelPanel)[axisname]
+                    panels[f"{axisname}-ticklabels"] = klass(ax, divider=divider)
+                    axis.set_tick_params(**{f"label{dir}": False})
+                if ( "label" in w
+                     and axis.label.get_visible()
+                     and axis.label.get_text()):
+                    klass = dict(x=XLabelPanel, y=XLabelPanel)[axisname]
+                    panels[f"{axisname}-label"] = klass(ax, divider=divider)
+                    axis.label.set_visible(False)
+
+    for k, panel in panels.items():
+        panel.axislines[:].spine.set_visible(False)
+        panel.axislines[:].toggle(all=False)
+
+    return panels
