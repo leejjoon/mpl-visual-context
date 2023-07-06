@@ -141,36 +141,33 @@ class ImageClipEffect(AbstractPathEffect):
                 gc, tpath, affine, None)
 
 
+def get_gradient_array_from_dir(dir: str, height: int):
+    assert dir in ["up", "down", "left", "right"]
+
+    if dir in ["up", "right"]:
+        a0, a1 = 0, height
+    else:
+        a0, a1 = height, 0
+
+    if dir in ["up", "down"]:
+        d = np.linspace(a0, a1, 256).reshape((256, 1))
+    else:
+        d = np.linspace(a0, a1, 256).reshape((1, 256))
+
+    return d
+
+
 def get_data_from_dir(dir, bbox=None, alpha=None):
     if bbox is None:
         bbox = Bbox.from_extents([0, 0, 1, 1])
 
     if isinstance(dir, str):
-        if dir in ["up", "right"]:
-            c0 = 0
-            c1 = bbox.height
-        else:
-            c0 = bbox.height
-            c1 = 0
-
-        if dir in ["up", "down"]:
-            data = np.linspace(c0, c1, 256).reshape((256, 1))
-        else:
-            data = np.linspace(c0, c1, 256).reshape((1, 256))
+        data = get_gradient_array_from_dir(dir, bbox.height)
     else:
         data = dir
 
     if isinstance(alpha, str):
-        if alpha in ["up", "down", "left", "right"]:
-            if alpha in ["up", "right"]:
-                a0, a1 = 0, 1
-            else:
-                a0, a1 = 1, 0
-
-            if alpha in ["up", "down"]:
-                alpha = np.linspace(a0, a1, 256).reshape((256, 1))
-            else:
-                alpha = np.linspace(a0, a1, 256).reshape((1, 256))
+        alpha = get_gradient_array_from_dir(alpha, 1)
 
     if isinstance(alpha, np.ndarray):
         new_shape = np.broadcast_shapes(alpha.shape, data.shape)
@@ -220,10 +217,52 @@ class TransformedBboxImage(BboxImage):
         # self.im.set_clip_path(tpath, transform=affine)
         BboxImage.draw(self, renderer)
 
+
 class GradientBboxImage(TransformedBboxImage):
     def _convert_data(self, data, alpha=None):
         data, alpha = get_data_from_dir(data, alpha=alpha)
         return data, alpha
+
+
+class ArtistBboxAlpha(TransformedBboxImage):
+    def __init__(self, artist, extent=None, axes=None,
+                 alpha=None,
+                 **im_kw):
+        self.artist = artist
+        self.coords = artist # [artist, artist]
+        if extent is None:
+            extent = [0, 0, 1, 1]
+        self.bbox_orig = Bbox.from_extents(extent)
+
+        BboxImage.__init__(self, Bbox([[0, 0], [0, 0]]), origin="lower",
+                           interpolation="none",
+                           transform=mtransforms.IdentityTransform(),
+                           **im_kw)
+
+        if isinstance(alpha, str):
+            self._alpha_orig = get_gradient_array_from_dir(alpha, 1)
+        else:
+            self.alpha_orig = alpha
+
+        # _A is internal array that is used by to show the image. For this to
+        # work, _check_unsampled_image method should return True.
+        self._A = np.zeros(self._alpha_orig.shape + (4, ), dtype=float)
+
+        self.axes = axes
+
+    def _check_unsampled_image(self):
+        return True
+
+    def draw(self, renderer):
+        self.set_clip_box(self.artist.get_clip_box())
+
+        from matplotlib.colors import to_rgb
+        rgb = to_rgb(self.artist.get_fc())
+        self._A[..., :3] = rgb
+        self._A[..., -1] = self.artist.get_alpha() * self._alpha_orig
+
+        super().draw(renderer)
+
 
 def get_bbox_image(data, extent=None, coords="data",
                    c0=0, c1=1., axes=None, **im_kw):
