@@ -145,8 +145,6 @@ class XLabelPanel(_LabelPanelBase):
         max_height = MaxHeight([])
         axc = divider.append_axes("bottom", max_height + Fixed(0.2),
                                   pad=0., sharex=ax)
-        axc.set_yticks([])
-        axc.set_xticks([])
         axc.grid(False)
 
         return axc, max_height
