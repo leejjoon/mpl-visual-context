@@ -51,6 +51,6 @@ class ColorMatrixStroke(ColorModifyStroke):
         c_rgb = c_rgba[:3]
         alpha = c_rgba[3]
 
-        c_rgb_new = self._m @ c_rgb
+        c_rgb_new = np.clip(self._m @ c_rgb, 0, 1)
 
         return np.append(c_rgb_new, alpha)
