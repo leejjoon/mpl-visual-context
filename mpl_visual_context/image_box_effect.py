@@ -133,10 +133,7 @@ class ImageClipEffect(AbstractPathEffect):
     def draw_path(self, renderer, gc, tpath, affine, rgbFace):
         """Draw the path with updated gc."""
 
-        # print("#", self.im.get_clip_box())
-        # print("#", self.im.get_clip_box())
         self.im.set_clip_path(tpath, transform=affine)
-        self.im.set_clip_box(self.im.axes.figure.bbox)
         self.im.draw(renderer)
 
         if self.draw_path:
