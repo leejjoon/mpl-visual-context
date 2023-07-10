@@ -155,6 +155,20 @@ class XLabelPanel(_LabelPanelBase):
         return s
 
 
+class YLabelPanel(_LabelPanelBase):
+    def _get_axc_max_extent(self, ax, divider):
+        max_width = MaxWidth([])
+        axc = divider.append_axes("left", max_width + Fixed(0.2),
+                                  pad=0., sharex=ax)
+        axc.grid(False)
+
+        return axc, max_width
+
+    def _get_main_label(self):
+        s = self.ax_orig.get_ylabel()
+        return s
+
+
 def axis_to_panels(divider, axis="both", which=None):
     if axis not in ["x", "y", "both"]:
         raise ValueError()
@@ -188,7 +202,7 @@ def axis_to_panels(divider, axis="both", which=None):
                 if ( "label" in w
                      and axis.label.get_visible()
                      and axis.label.get_text()):
-                    klass = dict(x=XLabelPanel, y=XLabelPanel)[axisname]
+                    klass = dict(x=XLabelPanel, y=YLabelPanel)[axisname]
                     panels[f"{axisname}-label"] = klass(ax, divider=divider)
                     axis.label.set_visible(False)
 
