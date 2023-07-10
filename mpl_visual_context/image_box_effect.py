@@ -255,7 +255,8 @@ class ArtistBboxAlpha(TransformedBboxImage):
         from matplotlib.colors import to_rgb
         rgb = to_rgb(self.artist.get_fc())
         self._A[..., :3] = rgb
-        self._A[..., -1] = self.artist.get_alpha() * self._alpha_orig
+        aa = self.artist.get_alpha()
+        self._A[..., -1] = (aa if aa else 1) * self._alpha_orig
 
         super().draw(renderer)
 
