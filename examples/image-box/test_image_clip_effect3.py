@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
 
-from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from mpl_visual_context.image_box_effect import (GradientBboxImage,
                                                  ImageClipEffect)
 from mpl_visual_context.patheffects import HLSModifyStroke
@@ -18,7 +17,7 @@ df_2016["month"] = df_2016["date"].apply(lambda s: int(s.split("-")[1]))
 
 import calendar
 
-use_cyberpunk = True
+use_cyberpunk = False
 
 if use_cyberpunk:
     import mplcyberpunk
@@ -44,7 +43,6 @@ ax.set_axisbelow(True)
 ax.set_xticks([-15, 0, 15, 30])
 ax.set_xlabel("Mean Temperature (C)", fontdict={"fontsize":"large"})
 
-
 from mpl_selector import categorical_selector
 from mpl_visual_context.spreader import spready
 
@@ -59,49 +57,47 @@ month_names = [calendar.month_name[i] for i in yindices]
 yoffsets = spready(polys, yindices, dy=-dy)
 
 ax.set_ylim(min(yoffsets), max(yoffsets) + dy)
-
 ax.set_yticks(yoffsets, labels=month_names)
-
 ax.set_ylabel("")
 
-from mpl_visual_context.axes_panel import axis_to_panels
+from mpl_visual_context.axes_panel import AxesDivider, InsetDivider, add_panel
 
 # convert labels to panels
 
-divider = make_axes_locatable(ax)
-panels = axis_to_panels(divider, axis="y")
-# panels_x = axis_to_panels(divider, axis="x", which=["ticks"])
-panels_x = axis_to_panels(divider, axis="x", which=["label", "ticks"])
-# panels_x = axis_to_panels(divider, axis="x")
-panels.update(panels_x)
+# divider = AxesDivider(ax)
+divider = InsetDivider(ax)
 
-# pe = HLSModifyStroke(dh=0, dl=0.2)
+panels = {}
+panels["y-ticklabels"] = add_panel(divider, "left", "ticklabels")
+panels["x-label"] = add_panel(divider, "bottom", "label")
+panels["x-ticklabels"] = add_panel(divider, "bottom", "ticklabels")
+
 from mpl_visual_context import check_dark
+
 pe_panel = dict(light=HLSModifyStroke(dh=0., dl=-0.05),
                 dark=HLSModifyStroke(dh=0., dl=0.05))
 
 for panel in panels.values():
-    if check_dark(panel.ax.patch.get_fc()):
+    if check_dark(panel.patch.get_fc()):
         pe = pe_panel["dark"]
     else:
         pe = pe_panel["light"]
 
-    panel.ax.patch.set_path_effects([pe])
+    panel.patch.set_path_effects([pe])
 
 panel = panels["y-ticklabels"]
-panel.set_va("bottom")
-panel.set_offset((0, 3))
+panel.annotations_set_va("bottom")
+panel.annotations_set_offset((0, 3))
 
 # gradient effect
 
 panel = panels["x-label"]
 bbox_image = GradientBboxImage("right", alpha=0.7,
                                extent=[0, 0, 1, 1],
-                               # extent=[0, y1, 1, y2],
                                coords="axes fraction",
                                cmap=cmap)
 
-panel.ax.add_artist(bbox_image)
+panel.add_artist(bbox_image)
 
 for p in polys:
     bbox_image = GradientBboxImage("right", alpha="up",
@@ -120,5 +116,5 @@ ax.spines["top"].set_visible(False)
 
 ax.legend_.remove()
 
-plt.tight_layout()
+plt.tight_layout(rect=[0, 0, 1, 0.97])
 plt.show()
