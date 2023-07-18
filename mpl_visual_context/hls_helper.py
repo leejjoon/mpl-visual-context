@@ -25,10 +25,11 @@ class HLSModifier:
                  dh=0, dl=0, ds=0, dalpha=0):
         """
         h, l, s :
-           float between 0 an 1 will be interpreted as a fixed valye
-           string of the form "50%" will be interpreted as a fraction to be multiplied. Negtaive percentage will invert the l to (1 - l), multiply the fact, and dp(1 - l).
+           float between 0 an 1 will be interpreted as a fixed value
+           string of the form "50%" will be interpreted as a fraction to be multiplied. Negtaive percentage will invert the l to (1 - l0), multiply the factor, and revert it back to original scale: 1 - l*(1 - l0).
 
-        Negative percentage of l is useful to make color bright. l value of black is 0. So its "50%" will till be 0. "-50%" will make it 0.5
+        Negative percentage will be useful to modify lightness or saturation. For example, "-0%" will be adjust the lightness to 1.
+
         """
         super().__init__()
         self.hls = (h, l, s)

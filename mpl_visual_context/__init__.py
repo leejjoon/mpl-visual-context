@@ -13,6 +13,9 @@ from ._version import __version__
 import colorsys
 from matplotlib.colors import to_rgb
 
+from .patheffects import HLSModifyStroke, ColorMatrixStroke
+
+
 def check_dark(c):
     c_rgb = to_rgb(c)
     c_hls = colorsys.rgb_to_hls(*c_rgb)

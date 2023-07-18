@@ -1,6 +1,4 @@
 import numpy as np
-import matplotlib.colors as mcolors
-from .patheffects import ColorModifyStroke
 
 # matrix values are from https://github.com/skratchdot/color-matrix/blob/master/lib/filters.js
 # which is MIT licensed.
@@ -37,20 +35,3 @@ color_matrix_filters = {
 def _get_matrix():
     return dict((k, np.array(l).reshape((3, 3)))
                 for k, l in color_matrix_filters.items())
-
-
-class ColorMatrixStroke(ColorModifyStroke):
-    _color_matrix = _get_matrix()
-
-    def __init__(self, kind):
-        self._m = self._color_matrix[kind]
-
-    def apply_to_color(self, c):
-        c_rgba = mcolors.to_rgba(c)
-
-        c_rgb = c_rgba[:3]
-        alpha = c_rgba[3]
-
-        c_rgb_new = np.clip(self._m @ c_rgb, 0, 1)
-
-        return np.append(c_rgb_new, alpha)

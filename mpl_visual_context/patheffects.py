@@ -1,15 +1,18 @@
 from abc import abstractmethod
+import numpy as np
 from matplotlib.patheffects import AbstractPathEffect
+import matplotlib.colors as mcolors
 
-from .pe_colors import HLSModifier
+from .hls_helper import HLSModifier
+from . import color_matrix as CM
 
 class ColorModifyStroke(AbstractPathEffect):
     @abstractmethod
     def apply_to_color(self, c):
         pass
 
-    def __or__(self, other):
-        return MultiColorStroke(self, other)
+    def __ror__(self, other):
+        return ChainedColorStroke(self, other)
 
     def draw_path(self, renderer, gc, tpath, affine, rgbFace):
         """Draw the path with updated gc."""
@@ -27,15 +30,23 @@ class ColorModifyStroke(AbstractPathEffect):
             gc0, tpath, affine, rgbFace)
 
 
-class MultiColorStroke(ColorModifyStroke):
-    def __init__(self, *sl):
-        self._pe_list = sl
+class ChainedColorStroke(ColorModifyStroke):
+    def __init__(self, cms1: ColorModifyStroke, cms2: ColorModifyStroke):
+        if isinstance(cms1, ChainedColorStroke):
+            self._cms_list = cms1._cms_list + [cms2]
+        else:
+            self._cms_list = [cms1, cms2]
 
     def apply_to_color(self, c):
-        for pe in self._pe_list:
-            c = pe.apply_to_color(c)
+        for _cms in self._cms_list:
+            c = _cms.apply_to_color(c)
 
         return c
+
+    def __repr__(self):
+        s = " | ".join([repr(cms) for cms in self._cms_list])
+        return "ChainedColorStroke({})".format(s)
+
 
 class HLSModifyStroke(ColorModifyStroke):
     """A line based PathEffect which re-draws a stroke."""
@@ -53,3 +64,31 @@ class HLSModifyStroke(ColorModifyStroke):
     def apply_to_color(self, c):
         return self._modifier.apply_to_color(c)
 
+    def __repr__(self):
+        h, l, s = self._modifier.hls
+        a = self._modifier.alpha
+        dh, dl, ds = self._modifier.d_hls
+        da = self._modifier.d_alpha
+
+        return f"HLSModifyStrke(h={h}, l={l}, s={s}, a={a}, dh={dh}, dl={dl}, ds={ds}, da={da})"
+
+
+class ColorMatrixStroke(ColorModifyStroke):
+    _color_matrix = CM._get_matrix()
+
+    def __init__(self, kind):
+        self._kind = kind
+        self._m = self._color_matrix[kind]
+
+    def apply_to_color(self, c):
+        c_rgba = mcolors.to_rgba(c)
+
+        c_rgb = c_rgba[:3]
+        alpha = c_rgba[3]
+
+        c_rgb_new = np.clip(self._m @ c_rgb, 0, 1)
+
+        return np.append(c_rgb_new, alpha)
+
+    def __repr__(self):
+        return f"ColorMatrix({self._kind})"
