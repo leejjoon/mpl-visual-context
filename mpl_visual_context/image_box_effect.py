@@ -11,7 +11,18 @@ from matplotlib.artist import Artist
 from matplotlib.image import Bbox, BboxImage, AxesImage
 from matplotlib.transforms import TransformedBbox
 
+from matplotlib.collections import Collection
+from matplotlib.container import Container
+
 from .mpl_fix import CollectionFix
+
+def _get_window_extent(s, renderer):
+    bbox = s.get_window_extent(renderer)
+    if ( not np.any(np.isfinite(bbox.get_points()))
+         and isinstance(s, Collection)):
+        bbox = CollectionFix.get_window_extent(s)
+    return bbox
+
 
 class TR:
     def __init__(self):
@@ -24,7 +35,13 @@ class TR:
         adopted from get_xy_transform of Text.Annotate.
         """
 
-        if isinstance(s, tuple):
+        if isinstance(s, (list, Container)):
+            # Container is subclass of Tuple, so it needs to be before the case
+            # of tuple.
+            bboxes = [_get_window_extent(s1, renderer) for s1 in s]
+            bbox = Bbox.union(bboxes)
+            return BboxTransformTo(bbox)
+        elif isinstance(s, tuple):
             s1, s2 = s
             from matplotlib.transforms import blended_transform_factory
             tr1 = TR.get_xy_transform(renderer, s1, axes=axes)
@@ -40,9 +57,7 @@ class TR:
             else:
                 raise RuntimeError("Unknown return type")
         elif isinstance(s, Artist):
-            bbox = s.get_window_extent(renderer)
-            if not np.any(np.isfinite(bbox.get_points())):
-                bbox = CollectionFix.get_window_extent(s)
+            bbox = _get_window_extent(s, renderer)
             return BboxTransformTo(bbox)
         elif isinstance(s, BboxBase):
             return BboxTransformTo(s)
@@ -127,6 +142,7 @@ class ImageClipEffect(AbstractPathEffect):
             im.remove()
 
         im.axes = ax
+        im.set_clip_box(ax.bbox)
 
         self.im = im
 
@@ -174,16 +190,23 @@ def get_data_from_dir(dir, bbox=None, alpha=None):
 
 
 class TransformedBboxImage(BboxImage):
+    def _get_bbox_orig(self, extent, bbox):
+        if bbox is not None:
+            if extent is not None:
+                raise ValueError("extent should be None if bbox is given")
+            bbox_orig = bbox
+        else:
+            if extent is None:
+                extent = [0, 0, 1, 1]
+            bbox_orig = Bbox.from_extents(extent)
 
-    def __init__(self, data, extent=None, coords="data", axes=None,
+        return bbox_orig
+
+    def __init__(self, data, extent=None, bbox=None, coords="data", axes=None,
                  alpha=None,
                  **im_kw):
         self.coords = coords
-        if extent is None:
-            extent = [0, 0, 1, 1]
-        self.bbox_orig = Bbox.from_extents(extent)
-
-
+        self.bbox_orig = self._get_bbox_orig(extent, bbox)
         BboxImage.__init__(self, Bbox([[0, 0], [0, 0]]), origin="lower",
                            interpolation="none",
                            transform=mtransforms.IdentityTransform(),
@@ -199,7 +222,11 @@ class TransformedBboxImage(BboxImage):
 
     def draw(self, renderer):
         tr = TR.get_xy_transform(renderer, self.coords, axes=self.axes)
-        trbox = TransformedBbox(self.bbox_orig, tr)
+        if callable(self.bbox_orig):
+            bbox_orig = self.bbox_orig(renderer)
+        else:
+            bbox_orig = self.bbox_orig
+        trbox = TransformedBbox(bbox_orig, tr)
         self.bbox = trbox
 
         if self.axes is None and isinstance(self.coords, Artist):
@@ -221,14 +248,12 @@ class GradientBboxImage(TransformedBboxImage):
 
 
 class ArtistBboxAlpha(TransformedBboxImage):
-    def __init__(self, artist, extent=None, axes=None,
-                 alpha=None,
+    def __init__(self, artist, extent=None, bbox=None, axes=None,
+                 alpha=None, coords=None,
                  **im_kw):
         self.artist = artist
-        self.coords = artist # [artist, artist]
-        if extent is None:
-            extent = [0, 0, 1, 1]
-        self.bbox_orig = Bbox.from_extents(extent)
+        self.coords = artist if coords is None else coords # [artist, artist]
+        self.bbox_orig = self._get_bbox_orig(extent, bbox)
 
         BboxImage.__init__(self, Bbox([[0, 0], [0, 0]]), origin="lower",
                            interpolation="none",

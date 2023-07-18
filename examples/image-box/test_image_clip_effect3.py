@@ -19,14 +19,24 @@ import calendar
 
 use_cyberpunk = False
 
+rc = {"font.serif": "TeX Gyre Schola, TeX Gyre Bonum, TeX Gyre Termes, TeX Gyre Pagella, DejaVu Serif, Bitstream Vera Serif, Computer Modern Roman, Bookman, Century Schoolbook L, Charter, ITC Bookman, New Century Schoolbook, Nimbus Roman No9 L, Palatino, Times New Roman, Times, Utopia, serif",
+      "font.sans-serif": "TeX Gyre Heros, DejaVu Sans, Bitstream Vera Sans, Computer Modern Sans Serif, Arial, Avenir, Fira Math, Frutiger, Geneva, Gill Sans, Helvetica, Lucid, Lucida Grande, Myriad Pro, Noto Sans, Roboto, Source Sans Pro, Tahoma, Trebuchet MS, Ubuntu, Univers, Verdana, sans-serif",
+      "font.monospace": "TeX Gyre Cursor, DejaVu Sans Mono, Bitstream Vera Sans Mono, Computer Modern Typewriter, Andale Mono, Courier New, Courier, Fixed, Nimbus Mono L, Terminal, monospace",
+      "font.cursive": "TeX Gyre Chorus, Apple Chancery, Felipa, Sand, Script MT, Textile, Zapf Chancery, cursive",
+      "font.fantasy": "TeX Gyre Adventor, Avant Garde, Charcoal, Chicago, Comic Sans MS, Futura, Humor Sans, Impact, Optima, Western, xkcd, fantasy",
+      "font.family": "sans-serif"}
+
 if use_cyberpunk:
     import mplcyberpunk
     plt.style.use("cyberpunk")
     cmap = None
+    plt.rcParams.update(rc)
 else:
     sns.set_theme()
     import cmocean as cmo
     cmap = "cmo.thermal"
+    plt.rcParams.update(rc)
+
 
 fig, ax = plt.subplots(1, 1, num=1, clear=True)
 
