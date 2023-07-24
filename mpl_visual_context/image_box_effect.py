@@ -1,3 +1,5 @@
+from abc import ABC, abstractmethod
+
 from matplotlib import transforms
 import numpy as np
 import matplotlib.pyplot as plt
@@ -25,6 +27,56 @@ def _get_window_extent(s, renderer):
 
 
 class TR:
+    """
+    A helper class to make a transform silimar to how Annotation does. The
+    coordinate can be:
+
+            - One of the following strings:
+
+              ==================== ============================================
+              Value                Description
+              ==================== ============================================
+              'figure points'      Points from the lower left of the figure
+              'figure pixels'      Pixels from the lower left of the figure
+              'figure fraction'    Fraction of figure from lower left
+              'subfigure points'   Points from the lower left of the subfigure
+              'subfigure pixels'   Pixels from the lower left of the subfigure
+              'subfigure fraction' Fraction of subfigure from lower left
+              'axes points'        Points from lower left corner of axes
+              'axes pixels'        Pixels from lower left corner of axes
+              'axes fraction'      Fraction of axes from lower left
+              'data'               Use the coordinate system of the object
+                                   being annotated (default)
+              ==================== ============================================
+
+              Note that 'subfigure pixels' and 'figure pixels' are the same
+              for the parent figure, so users who want code that is usable in
+              a subfigure can use 'subfigure pixels'.
+
+            - An `.Artist`: *xy* is interpreted as a fraction of the artist's
+              `~matplotlib.transforms.Bbox`. E.g. *(0, 0)* would be the lower
+              left corner of the bounding box and *(0.5, 1)* would be the
+              center top of the bounding box.
+
+            - A `.Transform` to transform *xy* to screen coordinates.
+
+            - A function with one of the following signatures::
+
+                def transform(renderer) -> Bbox
+                def transform(renderer) -> Transform
+
+              where *renderer* is a `.RendererBase` subclass.
+
+              The result of the function is interpreted like the `.Artist` and
+              `.Transform` cases above.
+
+            - A tuple *(xcoords, ycoords)* specifying separate coordinate
+              systems for *x* and *y*. *xcoords* and *ycoords* must each be
+              of one of the above described types.
+
+            See :ref:`plotting-guide-annotation` for more details.
+
+    """
     def __init__(self):
         pass
         # self.axes = ax
@@ -132,7 +184,12 @@ class TR:
 
 
 class ImageClipEffect(AbstractPathEffect):
-    def __init__(self, im, ax=None, remove_from_axes=False):
+    def __init__(self, im, ax=None, remove_from_axes=False, **kwargs):
+        """
+
+        Keyword Arguments:
+        clip_box
+        """
         if im.axes is None and ax is None:
             raise ValueError("im.axes should not be None")
 
@@ -142,7 +199,13 @@ class ImageClipEffect(AbstractPathEffect):
             im.remove()
 
         im.axes = ax
-        im.set_clip_box(ax.bbox)
+
+        if "clip_box" in kwargs:
+            clipbox = kwargs.pop("clip_box")
+            im.set_clip_box(clipbox)
+
+        if kwargs:
+            raise ValueError("Unknown keyword argument {}".format(", ".join(kwargs.keys())))
 
         self.im = im
 
@@ -189,8 +252,16 @@ def get_data_from_dir(dir, bbox=None, alpha=None):
     return data, alpha
 
 
-class TransformedBboxImage(BboxImage):
+class TransformedBboxBase(BboxImage):
+    """BboxImage which support flexible coordinate system similar to the annotation. This should be a base class, and the image  data (and alpha) should be set by the subclass..
+
+    """
     def _get_bbox_orig(self, extent, bbox):
+        """
+        Returns a bbox from the extent if extent is not None, otherwise
+        returns a bbox itself. If both are None, return s unit bbox.
+        """
+
         if bbox is not None:
             if extent is not None:
                 raise ValueError("extent should be None if bbox is given")
@@ -202,8 +273,7 @@ class TransformedBboxImage(BboxImage):
 
         return bbox_orig
 
-    def __init__(self, data, extent=None, bbox=None, coords="data", axes=None,
-                 alpha=None,
+    def __init__(self, extent=None, bbox=None, coords="data", axes=None,
                  **im_kw):
         self.coords = coords
         self.bbox_orig = self._get_bbox_orig(extent, bbox)
@@ -211,11 +281,12 @@ class TransformedBboxImage(BboxImage):
                            interpolation="none",
                            transform=mtransforms.IdentityTransform(),
                            **im_kw)
+        self.axes = axes
 
+    def init_data_n_alpha(self, data, alpha=None):
         data, alpha = self._convert_data(data, alpha=alpha)
         self.set_data(data)
         self.set_alpha(alpha)
-        self.axes = axes
 
     def _convert_data(self, data, alpha=None):
         return data, alpha
@@ -234,11 +305,21 @@ class TransformedBboxImage(BboxImage):
         else:
             axes = self.axes
 
-        # if axes is not None:
-        #     self.set_clip_box(axes.bbox)
+        super().draw(renderer)
 
-        # self.im.set_clip_path(tpath, transform=affine)
-        BboxImage.draw(self, renderer)
+
+class TransformedBboxImage(TransformedBboxBase):
+    def __init__(self, data, alpha=None,
+                 extent=None, bbox=None, coords="data", axes=None,
+                 **im_kw):
+        super().__init__(extent=extent, bbox=bbox, coords=coords, axes=axes,
+                         **im_kw)
+        self.init_data_n_alpha(data, alpha)
+
+    def init_data_n_alpha(self, data, alpha=None):
+        data, alpha = self._convert_data(data, alpha=alpha)
+        self.set_data(data)
+        self.set_alpha(alpha)
 
 
 class GradientBboxImage(TransformedBboxImage):
@@ -247,41 +328,114 @@ class GradientBboxImage(TransformedBboxImage):
         return data, alpha
 
 
-class ArtistBboxAlpha(TransformedBboxImage):
-    def __init__(self, artist, extent=None, bbox=None, axes=None,
-                 alpha=None, coords=None,
+class TransformedBboxAlphaBase(ABC, TransformedBboxBase):
+    """Base class for an image with alpha gradient and a single color"""
+    def __init__(self, alpha,
+                 extent=None, bbox=None, coords="data", axes=None,
                  **im_kw):
-        self.artist = artist
-        self.coords = artist if coords is None else coords # [artist, artist]
-        self.bbox_orig = self._get_bbox_orig(extent, bbox)
+        super().__init__(extent=extent, bbox=bbox, coords=coords, axes=axes,
+                         **im_kw)
+        # The shape of image is determined by the shape of alpha
+        self.init_alpha_array(alpha)
 
-        BboxImage.__init__(self, Bbox([[0, 0], [0, 0]]), origin="lower",
-                           interpolation="none",
-                           transform=mtransforms.IdentityTransform(),
-                           **im_kw)
+    def init_alpha_array(self, alpha=None):
 
         if isinstance(alpha, str):
-            self._alpha_orig = get_gradient_array_from_dir(alpha, 1)
+            self._alpha_array = get_gradient_array_from_dir(alpha, 1)
         else:
-            self.alpha_orig = alpha
+            self._alpha_array = alpha
 
         # _A is internal array that is used by to show the image. For this to
         # work, _check_unsampled_image method should return True.
-        self._A = np.zeros(self._alpha_orig.shape + (4, ), dtype=float)
-
-        self.axes = axes
+        self._A = np.zeros(self._alpha_array.shape + (4, ), dtype=float)
 
     def _check_unsampled_image(self):
         return True
 
-    def draw(self, renderer):
-        self.set_clip_box(self.artist.get_clip_box())
+    def _update_A(self):
+        self._update_A_rgb()
+        self._update_A_alpha()
 
+    @abstractmethod
+    def get_color(self):
+        ...
+
+    def _update_A_rgb(self):
+        # Update A using the fc of the artist and its alpha.
         from matplotlib.colors import to_rgb
-        rgb = to_rgb(self.artist.get_fc())
+        rgb = to_rgb(self.get_color())
         self._A[..., :3] = rgb
-        aa = self.artist.get_alpha()
-        self._A[..., -1] = (aa if aa else 1) * self._alpha_orig
+
+    def _update_A_alpha(self):
+        aa = self.get_alpha()
+        self._A[..., -1] = (aa if aa else 1) * self._alpha_array
+
+    def draw(self, renderer):
+
+        self._update_A()
+
+        super().draw(renderer)
+
+
+class ColorBboxAlpha(TransformedBboxAlphaBase):
+    """BboxImage of an image a given color and alpha gradient """
+    def __init__(self, color, alpha,
+                 extent=None, bbox=None, coords="data", axes=None,
+                 **im_kw):
+        super().__init__(alpha, extent=extent, bbox=bbox, coords=coords,
+                         axes=axes,
+                         **im_kw)
+        # The shape of image is determined by the shape of alpha
+        self.init_alpha_array(alpha)
+        self.set_color(color)
+
+    def set_color(self, color):
+        self._color = color
+
+    def get_color(self):
+        return self._color
+
+
+class ArtistBboxAlpha(TransformedBboxAlphaBase):
+    """BboxImage of an image with a face color of the given artist and the alpha
+gradient"""
+    def __init__(self, artist, alpha,
+                 extent=None, bbox=None, coords=None, axes=None,
+                 **im_kw):
+        if coords is None:
+            coords = artist
+        super().__init__(alpha, extent=extent, bbox=bbox, coords=coords,
+                         axes=axes,
+                         **im_kw)
+        # The shape of image is determined by the shape of alpha
+        self.init_alpha_array(alpha)
+        self._artist = artist
+        self._cb = None
+
+    def get_color(self):
+        return self._artist.get_fc()
+
+    def get_alpha(self):
+        return self._artist.get_alpha()
+
+    def get_clip_box(self):
+        return self._artist.get_clip_box()
+
+    def set_clip_box(self, v):
+        raise RuntimeError("clip_box is inherited from the proxy artist and should not be set explicitly")
+
+    # @property
+    # def clipbox(self):
+    #     return self._cb
+
+    # @clipbox.setter
+    # def clipbox(self, v):
+    #     if v is None: return
+    #     self.set_clip_box(v)
+
+    def draw(self, renderer):
+        # self.set_clip_box()
+        self.clipbox = self._artist.get_clip_box()
 
         super().draw(renderer)
 

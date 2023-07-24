@@ -114,9 +114,7 @@ for p in polys:
                                    extent=[0, 0, 1, 1],
                                    coords=("axes fraction", p),
                                    cmap=cmap)
-    bbox_image.set_clip_box(None)
-
-    pe = [ImageClipEffect(bbox_image, ax=ax)]
+    pe = [ImageClipEffect(bbox_image, ax=ax, clip_box=None)]
     p.set_path_effects(pe)
 
 # FIXME This does not affect the drawing, but affect the tight_bbox.
