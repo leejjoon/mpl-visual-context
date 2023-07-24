@@ -14,6 +14,7 @@ import colorsys
 from matplotlib.colors import to_rgb
 
 from .patheffects import HLSModifyStroke, ColorMatrixStroke
+from .pe_cyberfunk import GlowStroke
 
 
 def check_dark(c):
