@@ -35,11 +35,22 @@ sns.violinplot(data=tips, x="day", y="total_bill", hue="smoker",
                ax=ax)
 sns.despine(left=True)
 
-from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
-from mpl_visual_context.axes_panel import axis_to_panels
-divider = make_axes_locatable(ax)
-panels = axis_to_panels(divider, axis="y")
-panels = axis_to_panels(divider, axis="x",
-                        which=["ticks", "label"])
+# from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
+# from mpl_visual_context.axes_panel import axis_to_panels
+# divider = make_axes_locatable(ax)
+# panels = axis_to_panels(divider, axis="y")
+# panels = axis_to_panels(divider, axis="x",
+#                         which=["ticks", "label"])
+
+from mpl_visual_context.axes_panel import InsetDivider, AxesDivider
+from mpl_visual_context.axes_panel import add_panel
+divider = InsetDivider(ax)
+# divider = AxesDivider(ax)
+panels = {
+    "y-ticklabels": add_panel(divider, "left", "ticklabels", pad=0.),
+    "y-label": add_panel(divider, "left", "label", pad=0.),
+    "x-ticklabels": add_panel(divider, "bottom", "ticklabels", pad=0.),
+    "x-label": add_panel(divider, "bottom", "label", pad=0.),
+}
 plt.tight_layout()
 plt.show()

@@ -10,23 +10,13 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from mpl_visual_context.axes_helper import get_axislines
 
 
-class _PanelAxesBase(Axes):
-    @abstractmethod
-    def _get_axc_max_extent(self, ax, divider) -> tuple:
-        pass
-
-    @abstractmethod
-    def _populate_components_from(self, ax_arent):
-        pass
-
-
+class PanelAxes_(Axes):
     def __init__(self, *kl, **kwargs):
         super().__init__(*kl, **kwargs)
 
         self.ax_host = None
         self.axislines = get_axislines(self)
         self.annotations = []
-        self._extent_list = None
         # = self._get_axc_max_extent(ax, divider)
 
         # self.ax = axc
@@ -37,12 +27,15 @@ class _PanelAxesBase(Axes):
         self.direction = direction
         self._populate_components_from(ax_host)
 
-    def set_extent_list(self, extent_list):
-        self._extent_list = extent_list
+    def _populate_components_from(self, ax_host):
+        self.grid(False)
+
+    # def set_extent_list(self, extent_list):
+    #     self._extent_list = extent_list
 
     def add_annotation(self, ann, add_to_extent=True):
-        if add_to_extent:
-            self._extent_list.append(ann)
+        # if add_to_extent:
+        #     self._extent_list.append(ann)
         self.annotations.append(ann)
 
     def annotation_set(self, **kwargs):
@@ -60,6 +53,74 @@ class _PanelAxesBase(Axes):
     def annotations_set_offset(self, offset):
         for a in self.annotations:
             a.xyann = offset
+
+
+class _PanelAxesBase(PanelAxes_):
+    """This has an attribute of _extent_list, which is supposed to be linked to
+    the MaxWidth or MaxHeight size.
+
+    """
+    # @abstractmethod
+    # def _get_axc_max_extent(self, ax, divider) -> tuple:
+    #     pass
+
+    # @abstractmethod
+    # def _populate_components_from(self, ax_arent):
+    #     pass
+
+
+    def __init__(self, *kl, **kwargs):
+        super().__init__(*kl, **kwargs)
+        self._extent_list = []
+
+        # self.ax_host = None
+        # self.axislines = get_axislines(self)
+        # self.annotations = []
+        # self._extent_list = []
+        # # = self._get_axc_max_extent(ax, divider)
+
+        # # self.ax = axc
+        # # self.divider = divider
+
+    # def set_host(self, ax_host, direction):
+    #     # self.ax_host = ax_host
+    #     # self.direction = direction
+    #     super().set_host(ax_host, direction)
+    #     self._populate_components_from(ax_host)
+
+    def set_extent_list(self, extent_list):
+        self._extent_list = extent_list
+
+    def add_to_extent_list(self, a):
+        self._extent_list.append(a)
+
+
+    def add_annotation(self, ann, add_to_extent=True):
+        if add_to_extent:
+            self._extent_list.append(ann)
+        super().add_annotation(ann)
+        # self.annotations.append(ann)
+
+    # def annotation_set(self, **kwargs):
+    #     for a in self.annotations:
+    #         a.set(**kwargs)
+
+    # def annotations_set_ha(self, ha):
+    #     for a in self.annotations:
+    #         a.set_ha(ha)
+
+    # def annotations_set_va(self, va):
+    #     for a in self.annotations:
+    #         a.set_va(va)
+
+    # def annotations_set_offset(self, offset):
+    #     for a in self.annotations:
+    #         a.xyann = offset
+
+
+class PanelAxes(_PanelAxesBase):
+    pass
+
 
 # FIXME For now, TickLabelPanel have annotations associated with ticklabels,
 # frozen at the creation time. It would be good if this is somehow synced with
@@ -82,6 +143,8 @@ class _TickLabelPanelAxesBase(_PanelAxesBase):
             a.update_from(s)
             a.set(ha="center", va="center")
             self.add_annotation(a)
+
+        self.grid(False)
 
 
 class YTickLabelPanelAxes(_TickLabelPanelAxesBase):
@@ -197,8 +260,14 @@ class TitlePanelAxes(_LabelPanelAxesBase):
 
 def add_panel(divider, direction, kind,
               pad=0.,
-              axes_class=None):
-    assert kind in ["title", "label", "ticklabels"]
+              size=None,
+              axes_class=None,
+              axes_kwargs=None,
+              path_effects=None):
+    assert kind in ["title", "label", "ticklabels", "empty"]
+
+    if axes_kwargs is None:
+        axes_kwargs = {}
 
     if axes_class is None and kind is not None:
         if kind == "ticklabels":
@@ -213,313 +282,69 @@ def add_panel(divider, direction, kind,
                 axes_class = XLabelPanelAxes
         elif kind == "title":
             axes_class = TitlePanelAxes
+        else:
+            axes_class = PanelAxes
 
     if direction in ["left", "right"]:
         h_axes = divider._h_axes
         ax_host = h_axes[0] if direction == "left" else h_axes[-1]
 
-        max_width = MaxWidth([])
-        axc = divider.append_axes(direction, max_width + Fixed(0.2),
-                                  pad=pad, sharey=ax_host,
-                                  axes_class=axes_class)
-        extent_list = max_width._artist_list
+        size1 = MaxWidth([]) if size is None else size
+        axes_kwargs.update(sharey=ax_host)
+        axc = divider.append_axes(direction, size1 + Fixed(0.2),
+                                  pad=pad,
+                                  axes_class=axes_class,
+                                  **axes_kwargs)
         axc.set_xticks([])
         axis = ax_host.yaxis
     elif direction in ["bottom", "top"]:
         v_axes = divider._v_axes
         ax_host = v_axes[0] if direction == "bottom" else v_axes[-1]
 
-        max_height = MaxHeight([])
-        axc = divider.append_axes(direction, max_height + Fixed(0.2),
-                                  pad=pad, sharex=ax_host,
-                                  axes_class=axes_class)
-        extent_list = max_height._artist_list
+        size1 = MaxHeight([]) if size is None else size
+        axes_kwargs.update(sharex=ax_host)
+        axc = divider.append_axes(direction, size1 + Fixed(0.2),
+                                  pad=pad,
+                                  axes_class=axes_class,
+                                  **axes_kwargs)
         axc.set_yticks([])
         axis = ax_host.xaxis
     else:
         raise ValueError()
 
-    axc.set_extent_list(extent_list)
+    if size is None:
+        extent_list = size1._artist_list
+        axc.set_extent_list(extent_list)
+
     axc.set_host(ax_host, direction)
 
     axis.set_tick_params(**{f"label{direction}": False})
-    axis.set_tick_params(**{f"{direction}": False})
-    axis.label.set_visible(False)
+    # axis.set_tick_params(**{f"{direction}": False})
+    if kind != "title":
+        axis.label.set_visible(False)
 
     if kind == "title":
         ax_host.title.set_visible(False)
 
+    from .patheffects import HLSModifyStroke
+    from . import check_dark
+
+    if path_effects is None:
+        dl = 0.08
+        if check_dark(axc.patch.get_fc()):
+            # pe = HLSModifyStroke(l="-98%")
+            pe = HLSModifyStroke(dl=dl)
+        else:
+            # pe = HLSModifyStroke(l="98%")
+            pe = HLSModifyStroke(dl=-dl)
+        path_effects = [pe]
+
+    axc.patch.set_path_effects(path_effects)
+    axislines = get_axislines(axc)
+    axislines[:].line.set_visible(False)
+
     return axc
 
-
-# class XTickLabelPanel(_TickLabelPanelBase):
-#     def _get_axc_max_extent(self, ax, divider):
-#         max_height = MaxHeight([])
-#         axc = divider.append_axes("bottom", max_height + Fixed(0.2),
-#                                   pad=self.pad, sharex=ax)
-#         axc.set_yticks([])
-
-#         return axc, max_height
-
-#     def _get_tick_locs_labels(self):
-#         ax = self.ax_orig
-#         ticklocs = [(l, 0.5) for l in ax.xaxis.get_ticklocs()]
-#         coords = ("data", "axes fraction")
-#         ticklabels = [t for t in ax.xaxis.get_ticklabels()]
-
-#         return ticklocs, coords, ticklabels
-
-#     def set_ypos(self, pos):
-#         for a in self.annotations:
-#             a.xy = (a.xy[0], pos)
-
-
-class _PanelBase(ABC):
-    @abstractmethod
-    def _get_axc_max_extent(self, ax, divider) -> tuple:
-        pass
-
-    @abstractmethod
-    def _populate_components(self, axc, max_extent):
-        pass
-
-
-    def __init__(self, ax, divider, pad=0.5):
-        self.ax_orig = ax
-        self.annotations = []
-        self.pad = pad
-        # FIXME For now, the new axes will be on the left side.
-
-        axc, max_extent = self._get_axc_max_extent(ax, divider)
-
-        self.axislines = get_axislines(axc)
-
-        self._populate_components(axc, max_extent)
-
-        self.ax = axc
-        self.divider = divider
-
-    def set_ha(self, ha):
-        for a in self.annotations:
-            a.set_ha(ha)
-
-    def set_va(self, va):
-        for a in self.annotations:
-            a.set_va(va)
-
-    def set_offset(self, offset):
-        for a in self.annotations:
-            a.xyann = offset
-
-
-class _TickLabelPanelBase(_PanelBase):
-    @abstractmethod
-    def _get_tick_locs_labels(self) -> tuple:
-        pass
-
-    def _populate_components(self, axc, max_extent):
-        ticklocs, coords, ticklabels = self._get_tick_locs_labels()
-
-        for loc, s in zip(ticklocs, ticklabels):
-            a = axc.annotate(s.get_text(), loc,
-                             xytext=(0, 0),
-                             xycoords=coords,
-                             textcoords="offset points",
-                             annotation_clip=True,
-                             )
-            a.update_from(s)
-            a.set(ha="center", va="center")
-            max_extent.add_artist(a)
-            self.annotations.append(a)
-
-
-class YTickLabelPanel(_TickLabelPanelBase):
-    def _get_axc_max_extent(self, ax, divider):
-        max_width = MaxWidth([])
-        axc = divider.append_axes("left", max_width + Fixed(0.2),
-                                  pad=self.pad, sharey=ax)
-        axc.set_xticks([])
-
-        return axc, max_width
-
-    def _get_tick_locs_labels(self):
-        ax = self.ax_orig
-        ticklocs = [(0.5, l) for l in ax.yaxis.get_ticklocs()]
-        ticklabels = [t for t in ax.yaxis.get_ticklabels()]
-        coords = ("axes fraction", "data")
-        return ticklocs, coords, ticklabels
-
-    def set_xpos(self, pos):
-        for a in self.annotations:
-            a.xy = (pos, a.xy[-1])
-
-
-class XTickLabelPanel(_TickLabelPanelBase):
-    def _get_axc_max_extent(self, ax, divider):
-        max_height = MaxHeight([])
-        axc = divider.append_axes("bottom", max_height + Fixed(0.2),
-                                  pad=self.pad, sharex=ax)
-        axc.set_yticks([])
-
-        return axc, max_height
-
-    def _get_tick_locs_labels(self):
-        ax = self.ax_orig
-        ticklocs = [(l, 0.5) for l in ax.xaxis.get_ticklocs()]
-        coords = ("data", "axes fraction")
-        ticklabels = [t for t in ax.xaxis.get_ticklabels()]
-
-        return ticklocs, coords, ticklabels
-
-    def set_ypos(self, pos):
-        for a in self.annotations:
-            a.xy = (a.xy[0], pos)
-
-
-class _LabelPanelBase(_PanelBase):
-    # @abstractmethod
-    # def _get_tick_locs_labels(self) -> tuple:
-    #     pass
-
-    @abstractmethod
-    def _get_main_label(self) -> str:
-        pass
-
-    def _populate_components(self, axc, max_extent):
-        s = self._get_main_label()
-
-        a = axc.annotate(s.get_text(), (0.5, 0.5),
-                         xytext=(0, 0),
-                         # ha="center", va="bottom",
-                         xycoords="axes fraction",
-                         textcoords="offset points",
-                         annotation_clip=True,
-                         )
-        a.update_from(s)
-        a.set(ha="center", va="center")
-
-        max_extent.add_artist(a)
-        self.annotations.append(a)
-
-    def annotate(self, s, *kl, **kwargs):
-        # s = self._get_main_label()
-
-        kwargs["xycoords"] = "axes fraction"
-        kwargs["textcoords"] = "offset points"
-        kwargs["annotation_clip"] = True
-        a = self.ax.annotate(s, *kl, **kwargs)
-
-        # a.set(ha="center", va="center")
-
-        # max_extent.add_artist(a)
-        self.annotations.append(a)
-
-
-class XLabelPanel(_LabelPanelBase):
-    def _get_axc_max_extent(self, ax, divider):
-        max_height = MaxHeight([])
-        axc = divider.append_axes("bottom", max_height + Fixed(0.2),
-                                  pad=self.pad, sharex=ax)
-        axc.grid(False)
-
-        return axc, max_height
-
-    def _get_main_label(self):
-        s = self.ax_orig.xaxis.label
-        return s
-
-
-class YLabelPanel(_LabelPanelBase):
-    def _get_axc_max_extent(self, ax, divider):
-        max_width = MaxWidth([])
-        axc = divider.append_axes("left", max_width + Fixed(0.2),
-                                  pad=self.pad, sharex=ax)
-        axc.grid(False)
-
-        return axc, max_width
-
-    def _get_main_label(self):
-        s = self.ax_orig.yaxis.label
-        return s
-
-
-class TitlePanel(_LabelPanelBase):
-    def _get_axc_max_extent(self, ax, divider):
-        max_height = MaxHeight([])
-        axc = divider.append_axes("top", max_height + Fixed(0.2),
-                                  pad=self.pad)
-        axc.grid(False)
-
-        return axc, max_height
-
-    def _get_main_label(self):
-        s = self.ax_orig.title
-        return s
-
-
-def axis_to_panels(divider, axis="both", which=None, pad=0.):
-    if axis not in ["x", "y", "both"]:
-        raise ValueError()
-
-    axis_to_convert = axis
-    if which is None:
-        which = ["ticks", "label"]
-
-    ax = divider._axes
-
-    if axis_to_convert == "x":
-        _axis = [("x", ax.xaxis)]
-    elif axis_to_convert == "y":
-        _axis = [("y", ax.yaxis)]
-    else:
-        _axis = [("x", ax.xaxis),
-                 ("y", ax.yaxis)]
-
-    panels = {}
-    for axisname, axis in _axis:
-        if axis.get_visible():
-            dir = dict(x="bottom", y="left")[axisname]
-            ticklabels = axis.get_ticklabels()
-            for w in which:
-                if ( "ticks" in w
-                     and ticklabels
-                     and any([t.get_visible() for t in ticklabels]) ):
-                    klass = dict(x=XTickLabelPanel, y=YTickLabelPanel)[axisname]
-                    panels[f"{axisname}-ticklabels"] = klass(ax,
-                                                             divider, pad)
-                    axis.set_tick_params(**{f"label{dir}": False})
-                if ( "label" in w
-                     and axis.label.get_visible()
-                     and axis.label.get_text()):
-                    klass = dict(x=XLabelPanel, y=YLabelPanel)[axisname]
-                    panels[f"{axisname}-label"] = klass(ax,
-                                                        divider, pad)
-                    axis.label.set_visible(False)
-
-    for k, panel in panels.items():
-        # panel.axislines[:].spine.set_visible(False)
-        panel.axislines[:].toggle(all=False)
-
-    return panels
-
-
-def title_to_panel(divider, pad=0.):
-    ax = divider._axes
-
-    panels = {}
-    title = ax.title
-    if title.get_visible() and title.get_text():
-        panels["title"] = TitlePanel(ax, divider, pad=pad)
-        title.set_visible(False)
-
-    for k, panel in panels.items():
-        panel.axislines[:].toggle(all=False)
-
-    return panels
-
-
-# WindowExtentProxyArtist is derived from _AxesBase so that it is picked up by
-# the Axes.get_default_bbox_extra_artists.
 
 class WindowExtentProxyArtist(_AxesBase):
     def __init__(self, ax):
@@ -548,13 +373,19 @@ class AxesDivider():
         ax = self._divider.append_axes(direction, size, pad=pad, **kwargs)
 
         if direction == "left":
+            ax0 = self._h_axes[0]
             self._h_axes.insert(0, ax)
         elif direction == "right":
+            ax0 = self._h_axes[-1]
             self._h_axes.insert(0, ax)
         elif direction == "bottom":
+            ax0 = self._v_axes[0]
             self._v_axes.insert(0, ax)
         elif direction == "top":
+            ax0 = self._v_axes[-1]
             self._v_axes.append(ax)
+
+        ax.set_zorder(ax0.get_zorder() - 1)
 
         return ax
 
@@ -567,50 +398,61 @@ class InsetDivider():
 
     def append_axes(self, direction, size, pad=0, **kwargs):
         klass = kwargs.pop("axes_class", None)
+        # axes_kwargs = kwargs.pop("axes_kwargs", None)
+        # if axes_kwargs is None:
+        #     axes_kwargs = {}
+        # if kwargs:
+        #     raise ValueError(f"unknown keyword arguments {kwargs}")
+        axes_kwargs = kwargs
+
         if direction == "left":
             ax = self._h_axes[0]
+            axes_kwargs.update(sharey=ax)
             inax = inset_axes(ax,
                               width=size,
                               height="100%",
                               loc='upper right',
-                              axes_kwargs=dict(sharey=ax),
                               axes_class=klass,
+                              axes_kwargs=axes_kwargs,
                               bbox_to_anchor=(0, 0, 0, 1),
                               bbox_transform=ax.transAxes,
                               borderpad=(pad, 0))
             self._h_axes.insert(0, inax)
         elif direction == "right":
             ax = self._h_axes[-1]
+            axes_kwargs.update(sharey=ax)
             inax = inset_axes(ax,
                               width=size,
                               height="100%",
                               loc='upper left',
-                              axes_kwargs=dict(sharey=ax),
                               axes_class=klass,
+                              axes_kwargs=axes_kwargs,
                               bbox_to_anchor=(1, 0, 1, 1),
                               bbox_transform=ax.transAxes,
                               borderpad=(pad, 0))
             self._h_axes.append(inax)
         elif direction == "bottom":
             ax = self._v_axes[0]
+            axes_kwargs.update(sharex=ax)
             inax = inset_axes(ax,
                               width="100%",
                               height=size,
                               loc='upper right',
-                              axes_kwargs=dict(sharex=ax),
                               axes_class=klass,
+                              axes_kwargs=axes_kwargs,
                               bbox_to_anchor=(0, 0, 1, 0),
                               bbox_transform=ax.transAxes,
                               borderpad=(0, pad))
             self._v_axes.insert(0, inax)
         elif direction == "top":
             ax = self._v_axes[-1]
+            axes_kwargs.update(sharex=ax)
             inax = inset_axes(ax,
                               width="100%",
                               height=size,
                               loc='lower left',
-                              axes_kwargs=dict(sharex=ax),
                               axes_class=klass,
+                              axes_kwargs=axes_kwargs,
                               bbox_to_anchor=(0, 1, 1, 1),
                               bbox_transform=ax.transAxes,
                               borderpad=(0, pad))
@@ -621,5 +463,5 @@ class InsetDivider():
         pa.set_visible(True)
         ax.add_artist(pa)
         pa.set_in_layout(True)
-
+        inax.set_zorder(ax.get_zorder() - 1)
         return inax

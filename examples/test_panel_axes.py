@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-sns.set_theme()
+# sns.set_theme()
 
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
-from mpl_visual_context.axes_panel import axis_to_panels, title_to_panel
+# from mpl_visual_context.axes_panel import axis_to_panels, title_to_panel
 from mpl_visual_context.axes_panel import InsetDivider, AxesDivider
 from mpl_visual_context.axes_panel import add_panel
 
@@ -23,8 +23,8 @@ if True:
         ax.set_xlabel("X-label")
         ax.set_title("Title")
 
-        divider = AxesDivider(ax)
-        # divider = InsetDivider(ax)
+        # divider = AxesDivider(ax)
+        divider = InsetDivider(ax)
 
         ax_host = ax
         for w in which:
