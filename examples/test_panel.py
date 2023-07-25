@@ -9,6 +9,7 @@ from mpl_visual_context.image_box_effect import (GradientBboxImage,
                                                  ImageClipEffect)
 from mpl_visual_context.patheffects import HLSModifyStroke
 
+# plt.style.use("dark_background")
 sns.set_theme()
 
 tips = sns.load_dataset("tips")
@@ -52,5 +53,35 @@ panels = {
     "x-ticklabels": add_panel(divider, "bottom", "ticklabels", pad=0.),
     "x-label": add_panel(divider, "bottom", "label", pad=0.),
 }
+
+title = add_panel(divider, "top", "empty",
+                  pad=0.)
+
+from mpl_visual_context.legend_helper import (extract_offset_boxes_from_legend,
+                                              set_max_length)
+from matplotlib.offsetbox import     HPacker, VPacker
+
+leg_title, oblist = extract_offset_boxes_from_legend(ax.legend_)
+set_max_length(oblist)
+pack = HPacker(pad=0., sep=10, children=[leg_title] + oblist)
+
+from matplotlib.offsetbox import AnnotationBbox, AnchoredOffsetbox
+
+# ann = AnnotationBbox(pack, (1, 0.5), xybox=(-15, 0), xycoords='axes fraction',
+#                      boxcoords="offset points", box_alignment=(1, 0.5),
+#                      frameon=False,
+#                      in_layout=False,
+#                      )
+# title.add_artist(ann)
+# title._extent_list.append(ann)
+
+box = AnchoredOffsetbox("right", child=pack,
+                        pad=0,
+                        frameon=False)
+title.add_artist(box)
+title.add_to_extent_list(box)
+
+ax.legend_.remove()
+
 plt.tight_layout()
 plt.show()
