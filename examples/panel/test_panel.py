@@ -11,11 +11,12 @@ from mpl_visual_context.patheffects import HLSModifyStroke
 
 # plt.style.use("dark_background")
 sns.set_theme()
+# import mplcyberpunk
+# plt.style.use("cyberpunk")
 
 tips = sns.load_dataset("tips")
 
 fig, ax = plt.subplots(1, 1, num=1, clear=True)
-ax = ax
 
 # fig, axs = plt.subplots(1, 1, num=1, clear=True, figsize=(5, 8))
 # ax = axs[0]
@@ -34,7 +35,8 @@ sns.violinplot(data=tips, x="day", y="total_bill", hue="smoker",
                split=True, inner="quart", linewidth=1,
                palette={"Yes": "b", "No": ".85"},
                ax=ax)
-sns.despine(left=True)
+# sns.despine(left=True)
+# sns.despine()
 
 # from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 # from mpl_visual_context.axes_panel import axis_to_panels
@@ -54,8 +56,17 @@ panels = {
     "x-label": add_panel(divider, "bottom", "label", pad=0.),
 }
 
-title = add_panel(divider, "top", "empty",
-                  pad=0.)
+# ax.set_title("Title")
+# title = add_panel(divider, "top", "title",
+#                   pad=0.)
+
+legend_panel = add_panel(divider, "top", "empty",
+                         pad=0.)
+
+# title = add_panel(divider, "top", "title",
+#                   pad=0.)
+
+# legend_panel = title
 
 from mpl_visual_context.legend_helper import (extract_offset_boxes_from_legend,
                                               set_max_length)
@@ -78,8 +89,8 @@ from matplotlib.offsetbox import AnnotationBbox, AnchoredOffsetbox
 box = AnchoredOffsetbox("right", child=pack,
                         pad=0,
                         frameon=False)
-title.add_artist(box)
-title.add_to_extent_list(box)
+legend_panel.add_artist(box)
+legend_panel.add_to_extent_list(box)
 
 ax.legend_.remove()
 

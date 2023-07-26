@@ -318,8 +318,18 @@ def add_panel(divider, direction, kind,
 
     axc.set_host(ax_host, direction)
 
+    # FIXME We need to reorganize the logic for below and who does what. For
+    # now, some are done in the panel class, some are done in here.
     axis.set_tick_params(**{f"label{direction}": False})
     # axis.set_tick_params(**{f"{direction}": False})
+
+    if direction == "top" and kind != "title":
+        axc.set_title(ax_host.get_title())
+        axc.title.set_visible(ax_host.title.get_visible())
+        # For now, we only update the visibility. Using "update_from" somehow
+        # does not work, not sure why.
+        ax_host.title.set_visible(False)
+
     if kind != "title":
         axis.label.set_visible(False)
 
