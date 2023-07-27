@@ -2,20 +2,106 @@ from abc import abstractmethod
 import numpy as np
 from matplotlib.patheffects import AbstractPathEffect
 import matplotlib.colors as mcolors
+from matplotlib.path import Path
 
 from .hls_helper import HLSModifier
 from . import color_matrix as CM
 
-class ColorModifyStroke(AbstractPathEffect):
+
+class ChainablePathEffect(AbstractPathEffect):
+
+    def __or__(self, other):
+        return ChainedStroke(self, other)
+
+    @abstractmethod
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        return renderer, gc, tpath, affine, rgbFace
+
+    def draw_path(self, renderer, gc, tpath, affine, rgbFace):
+
+        renderer, gc, tpath, affine, rgbFace = self._convert(
+            renderer, gc, tpath, affine, rgbFace
+        )
+        renderer.draw_path(gc, tpath, affine, rgbFace)
+
+class ChainedStroke(ChainablePathEffect):
+    def __init__(self, pe1: ChainablePathEffect, pe2: ChainablePathEffect):
+        if isinstance(pe1, ChainedStroke):
+            self._pe_list = pe1._pe_list + [pe2]
+        else:
+            self._pe_list = [pe1, pe2]
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        for pe in self._pe_list:
+            renderer, gc, tpath, affine, rgbFace = pe._convert(
+                renderer, gc, tpath, affine, rgbFace
+            )
+        return renderer, gc, tpath, affine, rgbFace
+
+    def __repr__(self):
+        s = " | ".join([repr(pe) for pe in self._pe_list])
+        return "ChainedStroke({})".format(s)
+
+
+class PartialStroke(ChainablePathEffect):
+    def __init__(self, start, stop):
+        super().__init__()
+        self._start = start
+        self._stop = stop
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        codes, vertices = tpath.codes, tpath.vertices
+        n = len(codes)
+        start, stop = self._start, self._stop
+        start = start if isinstance(start, int) else int(start*n)
+        stop = stop if isinstance(stop, int) else int(stop*n)
+
+        # FIXME It does not support splines yet.
+        vertices = vertices[start:stop]
+        codes = codes[start:stop]
+        codes[0] = tpath.MOVETO
+
+        new_tpath = Path._fast_from_codes_and_verts(vertices, codes)
+
+        return renderer, gc, new_tpath, affine, rgbFace
+
+
+class OpenStroke(ChainablePathEffect):
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        codes, vertices = tpath.codes, tpath.vertices
+
+        codes = [c if c != tpath.CLOSEPOLY else tpath.STOP
+                 for c in codes]
+
+        new_tpath = Path._fast_from_codes_and_verts(vertices, codes)
+
+        return renderer, gc, new_tpath, affine, rgbFace
+
+
+class StrokeOnly(ChainablePathEffect):
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+
+        return renderer, gc, tpath, affine, None
+
+
+class FillOnly(ChainablePathEffect):
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        gc0 = renderer.new_gc()
+        gc0.copy_properties(gc)
+        gc0.set_linewidth(0)
+
+        return renderer, gc0, tpath, affine, rgbFace
+
+
+class ColorModifyStroke(ChainablePathEffect):
     @abstractmethod
     def apply_to_color(self, c):
         pass
 
-    def __ror__(self, other):
-        return ChainedColorStroke(self, other)
-
-    def draw_path(self, renderer, gc, tpath, affine, rgbFace):
-        """Draw the path with updated gc."""
+    def _convert(self, renderer, gc, tpath, affine, rgbFace):
         gc0 = renderer.new_gc()
         gc0.copy_properties(gc)
 
@@ -26,26 +112,8 @@ class ColorModifyStroke(AbstractPathEffect):
         # chage the fill color
         if rgbFace is not None:
             rgbFace = self.apply_to_color(rgbFace)
-        renderer.draw_path(
-            gc0, tpath, affine, rgbFace)
 
-
-class ChainedColorStroke(ColorModifyStroke):
-    def __init__(self, cms1: ColorModifyStroke, cms2: ColorModifyStroke):
-        if isinstance(cms1, ChainedColorStroke):
-            self._cms_list = cms1._cms_list + [cms2]
-        else:
-            self._cms_list = [cms1, cms2]
-
-    def apply_to_color(self, c):
-        for _cms in self._cms_list:
-            c = _cms.apply_to_color(c)
-
-        return c
-
-    def __repr__(self):
-        s = " | ".join([repr(cms) for cms in self._cms_list])
-        return "ChainedColorStroke({})".format(s)
+        return renderer, gc0, tpath, affine, rgbFace
 
 
 class HLSModifyStroke(ColorModifyStroke):
