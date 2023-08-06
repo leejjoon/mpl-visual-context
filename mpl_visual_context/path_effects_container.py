@@ -2,8 +2,8 @@ from matplotlib.patheffects import Normal
 
 # from .color_matrix import ColorMatrixStroke as CMS
 # from .patheffects import HLSModifyStroke
-from mpl_visual_context.color_matrix import ColorMatrixStroke as CMS
-from mpl_visual_context.patheffects import HLSModifyStroke
+# from mpl_visual_context.patheffects import ColorMatrixStroke as CMS
+# from mpl_visual_context.patheffects import HLSModifyStroke
 
 # class PathEffectsRegistry():
 #     def __init__(self):
@@ -29,14 +29,16 @@ class PathEffectsContainer():
         else:
             return iter(self._registry[self._current_name])
 
-registry = dict(grayscale=[],
-                sepia=[],
-                warm=[],
-                cool=[],
-                bright=[HLSModifyStroke(l="-50%")],
-                bright_gray=[HLSModifyStroke(l="-50%") | CMS("grayscale")])
 
-def test():
+def _example():
+    # from mpl_visual_context.patheffects import ColorMatrixStroke as CMS
+    # from mpl_visual_context.patheffects import HLSModifyStroke
+    registry = dict(grayscale=[],
+                    sepia=[],
+                    warm=[],
+                    cool=[],
+                    bright=[HLSModifyStroke(l="-50%")],
+                    bright_gray=[HLSModifyStroke(l="-50%") | CMS("grayscale")])
     pec = PathEffectsContainer(registry)
     pec.use("bright")
 

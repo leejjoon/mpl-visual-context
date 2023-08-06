@@ -16,12 +16,12 @@ sns.kdeplot(x, fill=True, lw=2, ec="r")
 
 ax.set_ylim(ymin=-0.02)
 
-from mpl_visual_context.patheffects import PartialStroke, OpenStroke
+from mpl_visual_context.patheffects import Partial, Open
 
 p = ax.collections[0]
 
 # The 1st half of the path is the bottom line, thus we only strke the 2nd half,
 # and do not close the path.
-p.set_path_effects([PartialStroke(0.5, 1.) | OpenStroke()])
+p.set_path_effects([Partial(0.5, 1.) | Open()])
 
 plt.show()

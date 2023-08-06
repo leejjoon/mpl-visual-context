@@ -27,10 +27,10 @@ ax.set_title('How fast do you want to go today?')
 
 # Now we pick Harry's bar and change its luminosity at 50 20%, and set
 # luminosity of others at 80%.
-from mpl_visual_context import HLSModifyStroke, ColorMatrixStroke
+from mpl_visual_context.patheffects import HLSModify, ColorMatrix
 
-pe_active = HLSModifyStroke(l="-80%")
-pe_inactive = HLSModifyStroke(l="-30%") | ColorMatrixStroke("grayscale")
+pe_active = HLSModify(l="-80%")
+pe_inactive = HLSModify(l="-30%") | ColorMatrix("grayscale")
 
 for name, p in zip(people, bars.patches):
     if name == "Harry":

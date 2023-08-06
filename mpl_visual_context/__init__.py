@@ -13,7 +13,7 @@ from ._version import __version__
 import colorsys
 from matplotlib.colors import to_rgb
 
-from .patheffects import HLSModifyStroke, ColorMatrixStroke
+# from .patheffects import HLSModifyStroke, ColorMatrixStroke
 from .pe_cyberfunk import GlowStroke
 
 
