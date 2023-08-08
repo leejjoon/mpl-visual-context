@@ -1,4 +1,5 @@
 from matplotlib.path import Path
+import matplotlib.transforms as mtransforms
 from .patheffects_base import ChainablePathEffect
 
 
@@ -54,3 +55,26 @@ class FillOnly(ChainablePathEffect):
 
         return renderer, gc0, tpath, affine, rgbFace
 
+
+class ClipPathFromPatch(ChainablePathEffect):
+
+    def __init__(self, patch):
+        """
+        The path will be stroked with its gc updated with the given
+        keyword arguments, i.e., the keyword arguments should be valid
+        gc parameter values.
+        """
+        super().__init__()
+        self.patch = patch
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace):
+        if self.patch is not None:
+            gc0 = renderer.new_gc()  # Don't modify gc, but a copy!
+            gc0.copy_properties(gc)
+            pp = mtransforms.TransformedPath(self.patch.get_path(),
+                                             self.patch.get_transform())
+            gc0.set_clip_path(pp)
+        else:
+            gc0 = gc
+
+        return renderer, gc0, tpath, affine, rgbFace

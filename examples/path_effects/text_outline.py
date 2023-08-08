@@ -2,35 +2,53 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.patheffects import Stroke, Normal
 
 fig = plt.figure(figsize=(8, 3))
 ax = fig.add_axes([0, 0, 1, 1], frameon=True)
-family = "Pacifico"
-size = 100
-cmap = plt.cm.magma
+# family = "Pacifico"
 text = "Matplotlib"
 
-t = ax.text(
-        0.5,
-        0.45,
-        text,
-        size=size,
-        color="white",
-        weight="bold",
-        va="center",
-        ha="center",
-        family=family,
-        #:w
-        #       zorder=-lw + 1,
-    )
-pe = []
-for x in np.linspace(1, 0, 20):
-    lw, color = x * 25, cmap(x)
-    pe.append(Stroke(linewidth=lw, foreground=color))
+t1 = ax.text(
+    0.5,
+    0.6,
+    "Matplotlib",
+    size=60,
+    color="green",
+    weight="bold",
+    va="center",
+    ha="center",
+)
 
-t.set_path_effects(pe)
+t2 = ax.text(
+    0.5,
+    0.3,
+    "mpl-visual-context",
+    size=30,
+    color="green",
+    weight="bold",
+    va="center",
+    ha="center",
+)
 
-# ax.set_fc(cmap(0))
+from matplotlib.patheffects import Normal
+from mpl_visual_context.patheffects import GCModify, Offset, FillColor
+from mpl_visual_context.patheffects import Glow, CmapGlow
+cmap = plt.cm.viridis
+# cmap = plt.cm.magma
+
+pe1 = [CmapGlow(cmap, diff_linewidth=10, alpha_line=1,
+                xoffset=5, yoffset=-5),
+       GCModify(foreground=cmap(0.), linewidth=0.5)
+       | FillColor(cmap(1.))
+       ]
+
+pe2 = [Offset(2, -2) | Glow(diff_linewidth=1.2),
+       Offset(1, -1),
+       FillColor("white"),
+       ]
+
+
+t1.set_path_effects(pe1)
+t2.set_path_effects(pe2)
+
 plt.show()
-

@@ -1,16 +1,16 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from mpl_visual_context.patheffects import (HLSModifyStroke,
-                                            ColorMatrixStroke as CMS,
+from mpl_visual_context.patheffects import (HLSModify,
+                                            ColorMatrix as CMS,
                                             PathEffectsContainer)
 
 def test():
     df_peng = sns.load_dataset("penguins")
 
     # registry of path_effects
-    registry = dict(bright=[HLSModifyStroke(l="-50%")],
-                    bright_gray=[HLSModifyStroke(l="-50%") | CMS("grayscale")])
+    registry = dict(bright=[HLSModify(l="-50%")],
+                    bright_gray=[HLSModify(l="-50%") | CMS("grayscale")])
 
     fig, axl = plt.subplots(1, 3,
                             figsize=(11, 3),

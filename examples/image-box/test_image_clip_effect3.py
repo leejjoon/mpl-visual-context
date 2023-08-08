@@ -6,7 +6,7 @@ import seaborn as sns
 
 from mpl_visual_context.image_box_effect import (GradientBboxImage,
                                                  ImageClipEffect)
-from mpl_visual_context.patheffects import HLSModifyStroke
+from mpl_visual_context.patheffects import HLSModify
 
 df_weather = pd.read_csv("end-part2_df.csv", index_col="date")
 
@@ -18,24 +18,14 @@ df_2016["month"] = df_2016["date"].apply(lambda s: int(s.split("-")[1]))
 import calendar
 
 use_cyberpunk = False
-
-rc = {"font.serif": "TeX Gyre Schola, TeX Gyre Bonum, TeX Gyre Termes, TeX Gyre Pagella, DejaVu Serif, Bitstream Vera Serif, Computer Modern Roman, Bookman, Century Schoolbook L, Charter, ITC Bookman, New Century Schoolbook, Nimbus Roman No9 L, Palatino, Times New Roman, Times, Utopia, serif",
-      "font.sans-serif": "TeX Gyre Heros, DejaVu Sans, Bitstream Vera Sans, Computer Modern Sans Serif, Arial, Avenir, Fira Math, Frutiger, Geneva, Gill Sans, Helvetica, Lucid, Lucida Grande, Myriad Pro, Noto Sans, Roboto, Source Sans Pro, Tahoma, Trebuchet MS, Ubuntu, Univers, Verdana, sans-serif",
-      "font.monospace": "TeX Gyre Cursor, DejaVu Sans Mono, Bitstream Vera Sans Mono, Computer Modern Typewriter, Andale Mono, Courier New, Courier, Fixed, Nimbus Mono L, Terminal, monospace",
-      "font.cursive": "TeX Gyre Chorus, Apple Chancery, Felipa, Sand, Script MT, Textile, Zapf Chancery, cursive",
-      "font.fantasy": "TeX Gyre Adventor, Avant Garde, Charcoal, Chicago, Comic Sans MS, Futura, Humor Sans, Impact, Optima, Western, xkcd, fantasy",
-      "font.family": "sans-serif"}
-
 if use_cyberpunk:
     import mplcyberpunk
     plt.style.use("cyberpunk")
     cmap = None
-    plt.rcParams.update(rc)
 else:
     sns.set_theme()
     import cmocean as cmo
     cmap = "cmo.thermal"
-    plt.rcParams.update(rc)
 
 
 fig, ax = plt.subplots(1, 1, num=1, clear=True)
@@ -84,8 +74,8 @@ panels["x-ticklabels"] = add_panel(divider, "bottom", "ticklabels")
 
 from mpl_visual_context import check_dark
 
-pe_panel = dict(light=HLSModifyStroke(dh=0., dl=-0.05),
-                dark=HLSModifyStroke(dh=0., dl=0.05))
+pe_panel = dict(light=HLSModify(dh=0., dl=-0.05),
+                dark=HLSModify(dh=0., dl=0.05))
 
 for panel in panels.values():
     if check_dark(panel.patch.get_fc()):
@@ -96,6 +86,7 @@ for panel in panels.values():
     panel.patch.set_path_effects([pe])
 
 panel = panels["y-ticklabels"]
+panel.grid(True)
 panel.annotations_set_va("bottom")
 panel.annotations_set_offset((0, 3))
 
@@ -116,11 +107,10 @@ for p in polys:
                                    cmap=cmap)
     pe = [ImageClipEffect(bbox_image, ax=ax, clip_box=None)]
     p.set_path_effects(pe)
+    p.set_zorder(p.get_zorder() + 3)
 
 # FIXME This does not affect the drawing, but affect the tight_bbox.
 polys.set("clip_on", False)
-
-ax.spines["top"].set_visible(False)
 
 ax.legend_.remove()
 

@@ -8,10 +8,10 @@ This example is based on barh.py example from matplotlib.
 import matplotlib.pyplot as plt
 import numpy as np
 
-import seaborn as sns
-sns.set_theme()
-# import mplcyberpunk
-# plt.style.use("cyberpunk")
+# import seaborn as sns
+# sns.set_theme()
+import mplcyberpunk
+plt.style.use("cyberpunk")
 
 # Fixing random state for reproducibility
 np.random.seed(19680801)
