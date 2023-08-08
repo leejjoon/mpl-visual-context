@@ -54,6 +54,39 @@ class PanelAxes_(Axes):
         for a in self.annotations:
             a.xyann = offset
 
+    def anchor(self, text_or_offsetbox, loc, pad=0, borderpad=0.5,
+               frameon=False, **kwargs):
+        """
+
+        pad : padding around the offsetbox created.
+        borderpad : padding between the offset box and the axes.
+        """
+        from matplotlib.offsetbox import (AnchoredOffsetbox,
+                                          TextArea)
+
+        if isinstance(text_or_offsetbox, str):
+            ob = TextArea(text_or_offsetbox, textprops=kwargs)
+        else:
+            ob = text_or_offsetbox
+
+        box = AnchoredOffsetbox(loc, child=ob,
+                                pad=pad, borderpad=borderpad,
+                                frameon=frameon)
+        self.add_artist(box)
+        self.add_annotation(box)
+
+    def _populate_components_from(self, ax_host):
+        # FIXME can we refactor this to use axislines?
+        # host_axislines = get_axislines(ax_host)
+        if self.direction in ["left", "right"]:
+            self.yaxis.set_tick_params(**ax_host.yaxis.get_tick_params())
+        elif self.direction in ["bottom", "top"]:
+            self.xaxis.set_tick_params(**ax_host.xaxis.get_tick_params())
+
+        self.axislines[:].toggle(all=False)
+        # self.grid(False)
+        # self.axislines[:].toggle(all=False)
+
 
 class _PanelAxesBase(PanelAxes_):
     """This has an attribute of _extent_list, which is supposed to be linked to
@@ -336,22 +369,22 @@ def add_panel(divider, direction, kind,
     if kind == "title":
         ax_host.title.set_visible(False)
 
-    from .patheffects import HLSModifyStroke
+    from .patheffects import HLSModify
     from . import check_dark
 
     if path_effects is None:
         dl = 0.08
         if check_dark(axc.patch.get_fc()):
             # pe = HLSModifyStroke(l="-98%")
-            pe = HLSModifyStroke(dl=dl)
+            pe = HLSModify(dl=dl)
         else:
             # pe = HLSModifyStroke(l="98%")
-            pe = HLSModifyStroke(dl=-dl)
+            pe = HLSModify(dl=-dl)
         path_effects = [pe]
 
     axc.patch.set_path_effects(path_effects)
-    axislines = get_axislines(axc)
-    axislines[:].line.set_visible(False)
+    # axislines = get_axislines(axc)
+    # axislines[:].line.set_visible(False)
 
     return axc
 
@@ -475,3 +508,27 @@ class InsetDivider():
         pa.set_in_layout(True)
         inax.set_zorder(ax.get_zorder() - 1)
         return inax
+
+
+class PanelMaker:
+    def __init__(self, ax, mode="inset"):
+        self._ax = ax
+        if mode == "inset":
+            self.divider = InsetDivider(ax)
+        else:
+            self.divider = AxesDivider(ax)
+
+    def add_panel(self, direction, kind,
+                  pad=0.,
+                  size=None,
+                  axes_class=None,
+                  axes_kwargs=None,
+                  path_effects=None):
+        panel = add_panel(self.divider, direction, kind,
+                          pad=pad,
+                          size=size,
+                          axes_class=axes_class,
+                          axes_kwargs=axes_kwargs,
+                          path_effects=path_effects)
+        return panel
+
