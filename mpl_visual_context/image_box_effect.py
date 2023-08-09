@@ -352,18 +352,19 @@ class TransformedBboxAlphaBase(ABC, TransformedBboxBase):
     def _check_unsampled_image(self):
         return True
 
-    def _update_A(self):
-        self._update_A_rgb()
+    def _update_A(self, color):
+        self._update_A_rgb(color)
         self._update_A_alpha()
 
     @abstractmethod
     def get_color(self):
         ...
 
-    def _update_A_rgb(self):
+    def _update_A_rgb(self, color):
         # Update A using the fc of the artist and its alpha.
         from matplotlib.colors import to_rgb
-        rgb = to_rgb(self.get_color())
+        # rgb = to_rgb(self.get_color())
+        rgb = to_rgb(color)
         self._A[..., :3] = rgb
 
     def _update_A_alpha(self):
@@ -372,7 +373,7 @@ class TransformedBboxAlphaBase(ABC, TransformedBboxBase):
 
     def draw(self, renderer):
 
-        self._update_A()
+        self._update_A(self.get_color())
 
         super().draw(renderer)
 
@@ -386,7 +387,7 @@ class ColorBboxAlpha(TransformedBboxAlphaBase):
                          axes=axes,
                          **im_kw)
         # The shape of image is determined by the shape of alpha
-        self.init_alpha_array(alpha)
+        # self.init_alpha_array(alpha)
         self.set_color(color)
 
     def set_color(self, color):
