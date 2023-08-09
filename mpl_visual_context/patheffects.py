@@ -5,7 +5,9 @@ from .path_effects_container import PathEffectsContainer
 
 from .patheffects_base import ChainablePathEffect
 
-from .patheffects_color import HLSModify, ColorMatrix, FillColor
+from .patheffects_color import (HLSModify, ColorMatrix, FillColor,
+                                FillColorFromStrokeColor,
+                                StrokeColorFromFillColor)
 from .patheffects_path import (Partial, Open, FillOnly, StrokeOnly,
                                ClipPathFromPatch)
 from .patheffects_transform import Offset

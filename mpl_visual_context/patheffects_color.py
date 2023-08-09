@@ -82,3 +82,27 @@ class FillColor(ChainablePathEffect):
     def _convert(self, renderer, gc, tpath, affine, rgbFace):
 
         return renderer, gc, tpath, affine, self._fillcolor
+
+
+class StrokeColorFromFillColor(ChainablePathEffect):
+
+    def __init__(self):
+        super().__init__()
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace):
+        gc0 = renderer.new_gc()
+        gc0.copy_properties(gc)
+        gc0.set_foreground(rgbFace)
+
+        return renderer, gc0, tpath, affine, rgbFace
+
+
+class FillColorFromStrokeColor(ChainablePathEffect):
+
+    def __init__(self):
+        super().__init__()
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace):
+        rgbFace_new = gc.get_foreground()
+
+        return renderer, gc, tpath, affine, rgbFace_new
