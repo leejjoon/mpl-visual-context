@@ -1,7 +1,7 @@
 
 import matplotlib.pyplot as plt
 
-from mpl_visual_context.patheffects import Glow
+from mpl_visual_context.patheffects import Glow, StrokeOnly
 
 fig, ax = plt.subplots(num=1, clear=True)
 
@@ -11,6 +11,6 @@ l1, = ax.plot(y1, marker='o')
 l2, = ax.plot(y2, marker='o')
 
 for l in [l1, l2]:
-    l.set_path_effects([Glow()])
+    l.set_path_effects([Glow(), StrokeOnly()])
 
 plt.show()

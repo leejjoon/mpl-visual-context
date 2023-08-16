@@ -7,7 +7,7 @@ import seaborn as sns
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from mpl_visual_context.image_box_effect import (GradientBboxImage,
                                                  ImageClipEffect)
-from mpl_visual_context.patheffects import HLSModifyStroke
+from mpl_visual_context.patheffects import HLSModify
 
 # plt.style.use("dark_background")
 sns.set_theme()

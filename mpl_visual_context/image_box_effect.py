@@ -283,6 +283,16 @@ class TransformedBboxBase(BboxImage):
                            **im_kw)
         self.axes = axes
 
+    def set_extent(self, extent, bbox=None):
+        self.bbox_orig = self._get_bbox_orig(extent, bbox)
+
+    def set_bbox(self, bbox):
+        "bbox or a callable which take a renderer as an arguemnt"
+        self.bbox_orig = bbox
+
+    def set_coords(self, coords):
+        self.coords = coords
+
     def init_data_n_alpha(self, data, alpha=None):
         data, alpha = self._convert_data(data, alpha=alpha)
         self.set_data(data)
@@ -300,10 +310,10 @@ class TransformedBboxBase(BboxImage):
         trbox = TransformedBbox(bbox_orig, tr)
         self.bbox = trbox
 
-        if self.axes is None and isinstance(self.coords, Artist):
-            axes = self.coords.axes
-        else:
-            axes = self.axes
+        # if self.axes is None and isinstance(self.coords, Artist):
+        #     axes = self.coords.axes
+        # else:
+        #     axes = self.axes
 
         super().draw(renderer)
 
