@@ -78,3 +78,22 @@ class ClipPathFromPatch(ChainablePathEffect):
             gc0 = gc
 
         return renderer, gc0, tpath, affine, rgbFace
+
+
+class ClipPathSelf(ChainablePathEffect):
+
+    def __init__(self):
+        """
+        The path will be stroked with its gc updated with the given
+        keyword arguments, i.e., the keyword arguments should be valid
+        gc parameter values.
+        """
+        super().__init__()
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace):
+        gc0 = renderer.new_gc()  # Don't modify gc, but a copy!
+        gc0.copy_properties(gc)
+        pp = mtransforms.TransformedPath(tpath, affine)
+        gc0.set_clip_path(pp)
+
+        return renderer, gc0, tpath, affine, rgbFace
