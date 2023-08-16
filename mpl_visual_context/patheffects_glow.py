@@ -10,12 +10,12 @@ class Glow(AbstractPathEffect):
                  n_glow_lines: int = 10,
                  diff_linewidth: float = 1.05,
                  alpha_line: float = 0.3,
-                 xoffset=0, yoffset=0):
+                 offset=(0, 0)):
         self.n_glow_lines = n_glow_lines
         self.diff_linewidth = diff_linewidth
         self.alpha_line = alpha_line
-        self.xoffset = xoffset
-        self.yoffset = yoffset
+        self.xoffset = offset[0]
+        self.yoffset = offset[1]
 
     def draw_path(self, renderer, gc, tpath, affine, rgbFace):
         """Draw the path with updated gc."""
@@ -29,10 +29,10 @@ class Glow(AbstractPathEffect):
 
         gc0.set_alpha(alpha0 * self.alpha_line / self.n_glow_lines)
 
-        renderer.draw_path(
-            gc, tpath, affine, rgbFace)
+        # renderer.draw_path(
+        #     gc, tpath, affine, rgbFace)
 
-        oo = np.linspace(1, 0, self.n_glow_lines)
+        oo = np.linspace(0, 1, self.n_glow_lines)
 
         for lw, o in zip(linewidths, oo):
             gc0.set_linewidth(lw)

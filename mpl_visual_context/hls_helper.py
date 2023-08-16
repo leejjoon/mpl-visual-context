@@ -2,53 +2,67 @@ import colorsys
 from numbers import Number
 import numpy as np
 import matplotlib.colors as mcolors
+from numbers import Number
 
-def _apply_scale_or_const(v0, v1):
-    if isinstance(v1, Number):
-        return v1
-    elif isinstance(v1, str):
+
+def _convert_scale_or_const(v1):
+    if isinstance(v1, str):
         if v1[-1] == "%":
             f = float(v1[:-1]) / 100
             if f > 0:
-                return  f * v0
+                return  (f, 0)
             else:
-                return  (1 + f * (1 - v0))
+                return  (-f, 1+f)
+    return (0, v1)
 
 
-def _apply_hls(hls0, hls1):
-    return [_apply_scale_or_const(v0, v1) for v0, v1 in zip(hls0, hls1)]
+class HLSModify_axb:
+    @staticmethod
+    def _check_ab(ab):
+        if isinstance(ab, Number):
+            return 0, ab
 
-class HLSModifier:
-    """A line based PathEffect which re-draws a stroke."""
+        try:
+            a, b = ab
+            assert isinstance(a, Number) and isinstance(b, Number)
+            return a, b
+        except:
+            raise ValueError("Unsupported parameter: requires a single number a seuqence of two numbers")
 
-    def __init__(self, h="100%", l="100%", s="100%", alpha="100%",
-                 dh=0, dl=0, ds=0, dalpha=0):
+    def __repr__(self):
+        # "HLSab: h={self.hls_a[0]}xh + "
+        s_hls = ", ".join([f"{n}'={a}*{n}+{b}" for n, a, b in
+                           zip("hls", self.hls_a, self.hls_b)])
+        s_alpha = f"a'={self.alpha_a}*a+{self.alpha_b}"
+
+        return f"HLSModify({s_hls}, {s_alpha})"
+
+    def __init__(self, h_ab=(1, 0), l_ab=(1, 0), s_ab=(1, 0),
+                 alpha_ab=(1, 0),
+                 clip_mode="clip"):
         """
-        h, l, s :
-           float between 0 an 1 will be interpreted as a fixed value
-           string of the form "50%" will be interpreted as a fraction to be multiplied. Negtaive percentage will invert the l to (1 - l0), multiply the factor, and revert it back to original scale: 1 - l*(1 - l0).
-
-        Negative percentage will be useful to modify lightness or saturation. For example, "-0%" will be adjust the lightness to 1.
-
         """
         super().__init__()
-        self.hls = (h, l, s)
-        self.alpha = alpha
-        self.d_hls = (dh, dl, ds)
-        self.d_alpha = dalpha
+        h_a, h_b = self._check_ab(h_ab)
+        l_a, l_b = self._check_ab(l_ab)
+        s_a, s_b = self._check_ab(s_ab)
+        self.alpha_a, self.alpha_b = self._check_ab(alpha_ab)
+        self.hls_a = np.array([h_a, l_a, s_a])
+        self.hls_b = np.array([h_b, l_b, s_b])
+        self.clip_mode = clip_mode
 
     def apply_to_hls(self, hls, alpha):
-        _hls = _apply_hls(hls, self.hls)
-        h, l, s = [v + v1 for v, v1 in zip(_hls,  self.d_hls)]
-        _alpha = _apply_scale_or_const(alpha, self.alpha)
-        alpha = [_alpha + self.d_alpha]
+        hls = self.hls_a * hls + self.hls_b
+        alpha = self.alpha_a * alpha + self.alpha_b
 
-        l = np.clip(l, 0, 1)
-        s = np.clip(s, 0, 1)
+        if self.clip_mode == "clip":
+            hls = np.clip(hls, 0, 1)
+            alpha = np.clip(alpha, 0, 1)
+        else:
+            hls %= 1
+            alpha %= 1
 
-        alpha = np.clip(alpha, 0, 1)
-
-        return (h, l, s), alpha
+        return hls, alpha
 
     def apply_to_color(self, c):
         c_rgba = mcolors.to_rgba(c)
@@ -61,5 +75,4 @@ class HLSModifier:
         (h, l, s), alpha = self.apply_to_hls(c_hls, alpha)
 
         c_rgb_new = colorsys.hls_to_rgb(h, l, s)
-
-        return np.append(c_rgb_new, alpha)
+        return np.append(c_rgb_new, [alpha])

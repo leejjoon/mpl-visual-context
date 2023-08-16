@@ -5,11 +5,13 @@ from .path_effects_container import PathEffectsContainer
 
 from .patheffects_base import ChainablePathEffect
 
-from .patheffects_color import (HLSModify, ColorMatrix, FillColor,
+from .patheffects_color import (HLSModify, HLSaxb,
+                                ColorMatrix,
+                                FillColor, StrokeColor,
                                 FillColorFromStrokeColor,
                                 StrokeColorFromFillColor)
 from .patheffects_path import (Partial, Open, FillOnly, StrokeOnly,
-                               ClipPathFromPatch)
+                               ClipPathFromPatch, ClipPathSelf)
 from .patheffects_transform import Offset
 # from .pe_cyberfunk import GlowStroke as Glow
 from .patheffects_glow import Glow, CmapGlow
