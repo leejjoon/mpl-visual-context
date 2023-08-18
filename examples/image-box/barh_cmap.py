@@ -1,6 +1,6 @@
 """
 ====================
-Horizontal bar chart
+Horizontal bar chart w/ Gradient
 ====================
 
 This example is based on barh.py example from matplotlib.
