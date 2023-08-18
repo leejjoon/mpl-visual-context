@@ -1,3 +1,9 @@
+"""
+====================
+Text w/ PathEffects
+====================
+
+"""
 # from the book
 
 import numpy as np

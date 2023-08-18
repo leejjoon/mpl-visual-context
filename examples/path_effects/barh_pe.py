@@ -5,6 +5,7 @@ Horizontal bar chart
 
 This example is based on barh.py example from matplotlib.
 """
+
 import matplotlib.pyplot as plt
 import numpy as np
 

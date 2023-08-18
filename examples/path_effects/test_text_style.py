@@ -1,3 +1,9 @@
+"""
+====================
+Text Styles
+====================
+
+"""
 
 from mpl_visual_context.patheffects_color import HLSModify, StrokeColorFromFillColor
 import matplotlib.pyplot as plt
