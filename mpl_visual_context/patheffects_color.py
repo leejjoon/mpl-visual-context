@@ -126,6 +126,8 @@ class FillColorFromStrokeColor(ChainablePathEffect):
         super().__init__()
 
     def _convert(self, renderer, gc, tpath, affine, rgbFace):
-        rgbFace_new = gc.get_foreground()
+        # GC does not have get_foreground or instead it has get_rgb, which
+        # return rgba. We simply remove a.
+        rgbFace_new = gc.get_rgb()[:3]
 
         return renderer, gc, tpath, affine, rgbFace_new

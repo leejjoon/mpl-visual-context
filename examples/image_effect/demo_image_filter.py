@@ -13,12 +13,13 @@ from matplotlib.artist import Artist
 import numpy as np
 from matplotlib.patheffects import Normal
 
-from mpl_visual_context.image_effect import (StartImageEffect, AlphaAxb,
+from mpl_visual_context.image_effect import (AlphaAxb,
                                              Pad, Fill, Dilation, Gaussian,
                                              Offset, LightSource)
 
 from mpl_visual_context.patheffects import (StrokeOnly, GCModify,
-                                            FillColor)
+                                            FillColor, ImageEffect)
+from mpl_visual_context.artist_helper import ArtistListWithPE
 
 def filtered_text(ax):
     # mostly copied from contour_demo.py
@@ -53,8 +54,8 @@ def filtered_text(ax):
         # t.set_color("k")
         # # to force TextPath (i.e., same font in all backends)
         # t.set_path_effects([Normal()])
-        t.set_path_effects([StartImageEffect() |
-                            Pad(10) | Fill("w") | Dilation(5) | Gaussian(1),
+        iel = Pad(10) | Fill("w") | Dilation(5) | Gaussian(1)
+        t.set_path_effects([ImageEffect(iel),
                             FillColor("k")
                             ])
 
@@ -69,36 +70,18 @@ def drop_shadow_line(ax):
     l1, = ax.plot([0.1, 0.5, 0.9], [0.1, 0.9, 0.5], "bo-")
     l2, = ax.plot([0.1, 0.5, 0.9], [0.5, 0.2, 0.7], "ro-")
 
-    # gauss = DropShadowFilter(4)
+    iel = (AlphaAxb((0.3, 0)) | Pad(10) | Fill("k") | Dilation(3)
+           | Gaussian(3) | Offset(3, -5))
+    pe = [ImageEffect(iel), Normal()]
 
     for l in [l1, l2]:
-
-        l.set_path_effects([StartImageEffect() | AlphaAxb((0.3, 0)) |
-                            Pad(10) | Fill("k") | Dilation(3) |
-                            Gaussian(3) | Offset(3, -5),
-                            Normal()])
+        l.set_path_effects(pe)
 
     ax.set_xlim(0., 1.)
     ax.set_ylim(0., 1.)
 
     ax.xaxis.set_visible(False)
     ax.yaxis.set_visible(False)
-
-class ArtistListWithPE(Artist):
-    """A simple container to filter multiple artists at once."""
-
-    def __init__(self, artist_list, pe):
-        super().__init__()
-        self._artist_list = artist_list
-        self._pe = pe
-
-    def draw(self, renderer):
-        for a in self._artist_list:
-            pe0 = a.get_path_effects()
-            a.set_path_effects(self._pe)
-            a.draw(renderer)
-            a.set_path_effects(pe0)
-
 
 def drop_shadow_patches(ax):
     # Copied from barchart_demo.py
@@ -114,10 +97,10 @@ def drop_shadow_patches(ax):
     rects2 = ax.bar(ind + width + 0.1, group2_means, width,
                     color='y', ec="w", lw=2)
 
-    al = ArtistListWithPE(rects1 + rects2,
-                          [StartImageEffect() | AlphaAxb((0.5, 0)) |
-                           Pad(10) | Fill("k") | Dilation(3) |
-                           Gaussian(3) | Offset(-3, 3)])
+    iel = (AlphaAxb((0.5, 0)) | Pad(10) | Fill("k") | Dilation(3)
+           | Gaussian(3) | Offset(-3, 3))
+    al = ArtistListWithPE(rects1 + rects2, [ImageEffect(iel)])
+
     al.set_zorder(0.5)
     ax.add_artist(al)
 
@@ -129,18 +112,18 @@ def drop_shadow_patches(ax):
 
 def light_filter_pie(ax):
     fracs = [15, 30, 45, 10]
-    explode = (0, 0.05, 0, 0)
+    explode = (0, 0.1, 0, 0)
     pies = ax.pie(fracs, explode=explode)
 
-    light_filter = StartImageEffect() | LightSource(erosion_size=4,
-                                                    gaussian_size=4)
+    light_filter = ImageEffect(LightSource(erosion_size=4, gaussian_size=4))
     for p in pies[0]:
         p.set_path_effects([light_filter])
 
-    al = ArtistListWithPE(pies[0],
-                          [StartImageEffect() | AlphaAxb((0.7, 0)) |
-                           Pad(10) | Fill("k") | Dilation(3) |
-                           Gaussian(7) | Offset(5, -5)])
+    shadow = ImageEffect(AlphaAxb((0.7, 0))
+                         | Pad(10) | Fill("k") | Dilation(3)
+                         | Gaussian(7) | Offset(5, -5))
+    al = ArtistListWithPE(pies[0], [shadow])
+
     al.set_zorder(0.5)
     ax.add_artist(al)
 

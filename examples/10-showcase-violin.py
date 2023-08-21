@@ -6,7 +6,7 @@ Violing Chart demonstraing various mpl-visual-context features
 """
 
 # import numpy as np
-from mpl_visual_context.patheffects_image_bbox import AlphaGradient
+from mpl_visual_context.patheffects import AlphaGradient
 import matplotlib.pyplot as plt
 import mpl_visual_context.patheffects as pe
 import seaborn
@@ -74,27 +74,14 @@ ax.annotate("(d) Light effect and shadow",
 
 import mpl_visual_context.image_effect as ie
 
-# pe_list = [
-#     # shadow
-#     ie.StartImageEffect() | ie.AlphaAxb((0.5, 0)) |
-#     ie.Pad(10) | ie.Fill("k") | ie.Dilation(3) |
-#     ie.Gaussian(4) | ie.Offset(3, -3),
-#     # light effect
-#     ie.StartImageEffect() | ie.LightSource(erosion_size=5, gaussian_size=5),
-#     # stroke
-#     pe.StrokeColorFromFillColor() | pe.StrokeOnly()
-# ]
-
 pe_list = [
     # shadow
-    pe.ImageEffect(ie.AlphaAxb((0.5, 0))
-                | ie.Pad(10) | ie.Fill("k") | ie.Dilation(3)
-                | ie.Gaussian(4) | ie.Offset(3, -3)),
+    pe.FillOnly() | pe.ImageEffect(ie.AlphaAxb((0.5, 0))
+                                   | ie.Pad(10) | ie.Fill("k") | ie.Dilation(3)
+                                   | ie.Gaussian(4) | ie.Offset(3, -3)),
     # light effect
     pe.HLSModify(l=0.7) | pe.FillOnly()
     | pe.ImageEffect(ie.LightSource(erosion_size=5, gaussian_size=5)),
-    # stroke
-    pe.StrokeColorFromFillColor() | pe.StrokeOnly()
 ]
 
 for x, coll in enumerate(colls):

@@ -149,13 +149,16 @@ class Erosion(ChainableImageEffect):
 from matplotlib.colors import LightSource as _LightSource
 
 class LightSource(ChainableImageEffect):
-    def __init__(self, erosion_size=3, gaussian_size=3, fraction=1):
+    def __init__(self, erosion_size=3, gaussian_size=3, fraction=1,
+                 blend_mode="overlay",
+                 azdeg=315, altdeg=45):
         "ox, oy in points (72 dpi)"
         super().__init__()
-        self.light_source = _LightSource()
+        self.light_source = _LightSource(azdeg=azdeg, altdeg=altdeg)
         self.erosion_size = erosion_size
         self.gaussian_size = gaussian_size
         self.fraction = fraction
+        self.blend_mode = blend_mode
 
     def process_image(self, dpi, scale_factor, x, y, img):
 
@@ -175,7 +178,7 @@ class LightSource(ChainableImageEffect):
         rgb = np.clip(img[:, :, :-1], 0.2, 0.8)
         rgb2 = self.light_source.shade_rgb(rgb, elev,
                                            fraction=self.fraction,
-                                           blend_mode="overlay")
+                                           blend_mode=self.blend_mode)
         out = np.concatenate([rgb2, img[:,:,3:]], -1)
         return dpi, scale_factor, x, y, out
 

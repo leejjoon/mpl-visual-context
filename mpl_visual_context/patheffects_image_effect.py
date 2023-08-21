@@ -12,17 +12,27 @@ from matplotlib import cbook
 #                        x, y, img):
 #         return dpi, scale_factor, x, y, img
 
+# from matplotlib.backends._backend_agg import RendererAgg as _RendererAgg
+from matplotlib.backends.backend_agg import RendererAgg
+
+# class RendererAgg(_RendererAgg):
+#     def __init__(self, width, height, dpi):
+#         super().__init__(width, height, dpi)
+#         self._raster_depth = 0
+#         self._rasterizing = False
+
 
 class ImageEffect(AbstractPathEffect):
     def __init__(self, image_effect):
         self._image_effect = image_effect
         self._path_effect = None
 
-    def __lor__(self, other: AbstractPathEffect):
-        self._path_effect = other
+    def __ror__(self, other: AbstractPathEffect):
+        e = ImageEffect(self._image_effect)
+        e._path_effect = other
+        return e
 
     def get_image(self, renderer, gc, tpath, affine, rgbFace):
-        from matplotlib.backends._backend_agg import RendererAgg
         agg_dpi = renderer.dpi  # For the pdf backend, this is the dpi set by
                                 # the user not the intrinsic 72.
 
@@ -52,7 +62,7 @@ class ImageEffect(AbstractPathEffect):
         else:
             agg_renderer.draw_path(gc, tpath, new_affine, rgbFace)
 
-        orig_img = np.asarray(memoryview(agg_renderer))
+        orig_img = np.asarray(agg_renderer.buffer_rgba())
         slice_y, slice_x = cbook._get_nonzero_slices(orig_img[..., 3])
         cropped_img = orig_img[slice_y, slice_x] / 255.
 
