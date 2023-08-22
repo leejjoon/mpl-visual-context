@@ -98,6 +98,7 @@ class _PanelAxesBase(PanelAxes_):
     the MaxWidth or MaxHeight size.
 
     """
+
     # @abstractmethod
     # def _get_axc_max_extent(self, ax, divider) -> tuple:
     #     pass
@@ -105,7 +106,6 @@ class _PanelAxesBase(PanelAxes_):
     # @abstractmethod
     # def _populate_components_from(self, ax_arent):
     #     pass
-
 
     def __init__(self, *kl, **kwargs):
         super().__init__(*kl, **kwargs)
@@ -131,7 +131,6 @@ class _PanelAxesBase(PanelAxes_):
 
     def add_to_extent_list(self, a):
         self._extent_list.append(a)
-
 
     def add_annotation(self, ann, add_to_extent=True):
         if add_to_extent:
@@ -172,12 +171,14 @@ class _TickLabelPanelAxesBase(_PanelAxesBase):
         ticklocs, coords, ticklabels = self._get_tick_locs_labels(ax_host)
 
         for loc, s in zip(ticklocs, ticklabels):
-            a = self.annotate(s.get_text(), loc,
-                              xytext=(0, 0),
-                              xycoords=coords,
-                              textcoords="offset points",
-                              annotation_clip=True,
-                              )
+            a = self.annotate(
+                s.get_text(),
+                loc,
+                xytext=(0, 0),
+                xycoords=coords,
+                textcoords="offset points",
+                annotation_clip=True,
+            )
             a.update_from(s)
             a.set(ha="center", va="center")
             self.add_annotation(a)
@@ -225,7 +226,6 @@ class XTickLabelPanelAxes(_TickLabelPanelAxesBase):
             a.xy = (a.xy[0], pos)
 
 
-
 class _LabelPanelAxesBase(_PanelAxesBase):
     # @abstractmethod
     # def _get_tick_locs_labels(self) -> tuple:
@@ -238,13 +238,15 @@ class _LabelPanelAxesBase(_PanelAxesBase):
     def _populate_components_from(self, ax_host):
         s = self._get_main_label(ax_host)
 
-        a = super().annotate(s.get_text(), (0.5, 0.5),
-                             xytext=(0, 0),
-                             # ha="center", va="bottom",
-                             xycoords="axes fraction",
-                             textcoords="offset points",
-                             annotation_clip=True,
-                             )
+        a = super().annotate(
+            s.get_text(),
+            (0.5, 0.5),
+            xytext=(0, 0),
+            # ha="center", va="bottom",
+            xycoords="axes fraction",
+            textcoords="offset points",
+            annotation_clip=True,
+        )
         a.update_from(s)
         a.set(ha="center", va="center")
 
@@ -271,37 +273,38 @@ class _LabelPanelAxesBase(_PanelAxesBase):
 
 
 class XLabelPanelAxes(_LabelPanelAxesBase):
-
     def _get_main_label(self, ax_host):
         s = ax_host.xaxis.label
         return s
 
 
 class YLabelPanelAxes(_LabelPanelAxesBase):
-
     def _get_main_label(self, ax_host):
         s = ax_host.yaxis.label
         return s
 
 
 class TitlePanelAxes(_LabelPanelAxesBase):
-
     def _get_main_label(self, ax_host):
         s = ax_host.title
         return s
 
 
-
 ##
 ##
 ##
 
-def add_panel(divider, direction, kind,
-              pad=0.,
-              size=None,
-              axes_class=None,
-              axes_kwargs=None,
-              path_effects=None):
+
+def add_panel(
+    divider,
+    direction,
+    kind,
+    pad=0.0,
+    size=None,
+    axes_class=None,
+    axes_kwargs=None,
+    path_effects=None,
+):
     assert kind in ["title", "label", "ticklabels", "empty"]
 
     if axes_kwargs is None:
@@ -329,10 +332,9 @@ def add_panel(divider, direction, kind,
 
         size1 = MaxWidth([]) if size is None else size
         axes_kwargs.update(sharey=ax_host)
-        axc = divider.append_axes(direction, size1 + Fixed(0.2),
-                                  pad=pad,
-                                  axes_class=axes_class,
-                                  **axes_kwargs)
+        axc = divider.append_axes(
+            direction, size1 + Fixed(0.2), pad=pad, axes_class=axes_class, **axes_kwargs
+        )
         axc.set_xticks([])
         axis = ax_host.yaxis
     elif direction in ["bottom", "top"]:
@@ -341,10 +343,9 @@ def add_panel(divider, direction, kind,
 
         size1 = MaxHeight([]) if size is None else size
         axes_kwargs.update(sharex=ax_host)
-        axc = divider.append_axes(direction, size1 + Fixed(0.2),
-                                  pad=pad,
-                                  axes_class=axes_class,
-                                  **axes_kwargs)
+        axc = divider.append_axes(
+            direction, size1 + Fixed(0.2), pad=pad, axes_class=axes_class, **axes_kwargs
+        )
         axc.set_yticks([])
         axis = ax_host.xaxis
     else:
@@ -410,7 +411,7 @@ class WindowExtentProxyArtist(_AxesBase):
         pass
 
 
-class AxesDivider():
+class AxesDivider:
     def __init__(self, ax):
         self._axes = ax
         self._h_axes = [ax]
@@ -438,7 +439,7 @@ class AxesDivider():
         return ax
 
 
-class InsetDivider():
+class InsetDivider:
     def __init__(self, ax):
         self._axes = ax
         self._h_axes = [ax]
@@ -456,54 +457,62 @@ class InsetDivider():
         if direction == "left":
             ax = self._h_axes[0]
             axes_kwargs.update(sharey=ax)
-            inax = inset_axes(ax,
-                              width=size,
-                              height="100%",
-                              loc='upper right',
-                              axes_class=klass,
-                              axes_kwargs=axes_kwargs,
-                              bbox_to_anchor=(0, 0, 0, 1),
-                              bbox_transform=ax.transAxes,
-                              borderpad=(pad, 0))
+            inax = inset_axes(
+                ax,
+                width=size,
+                height="100%",
+                loc='upper right',
+                axes_class=klass,
+                axes_kwargs=axes_kwargs,
+                bbox_to_anchor=(0, 0, 0, 1),
+                bbox_transform=ax.transAxes,
+                borderpad=(pad, 0),
+            )
             self._h_axes.insert(0, inax)
         elif direction == "right":
             ax = self._h_axes[-1]
             axes_kwargs.update(sharey=ax)
-            inax = inset_axes(ax,
-                              width=size,
-                              height="100%",
-                              loc='upper left',
-                              axes_class=klass,
-                              axes_kwargs=axes_kwargs,
-                              bbox_to_anchor=(1, 0, 1, 1),
-                              bbox_transform=ax.transAxes,
-                              borderpad=(pad, 0))
+            inax = inset_axes(
+                ax,
+                width=size,
+                height="100%",
+                loc='upper left',
+                axes_class=klass,
+                axes_kwargs=axes_kwargs,
+                bbox_to_anchor=(1, 0, 1, 1),
+                bbox_transform=ax.transAxes,
+                borderpad=(pad, 0),
+            )
             self._h_axes.append(inax)
         elif direction == "bottom":
             ax = self._v_axes[0]
             axes_kwargs.update(sharex=ax)
-            inax = inset_axes(ax,
-                              width="100%",
-                              height=size,
-                              loc='upper right',
-                              axes_class=klass,
-                              axes_kwargs=axes_kwargs,
-                              bbox_to_anchor=(0, 0, 1, 0),
-                              bbox_transform=ax.transAxes,
-                              borderpad=(0, pad))
+            inax = inset_axes(
+                ax,
+                width="100%",
+                height=size,
+                loc='upper right',
+                axes_class=klass,
+                axes_kwargs=axes_kwargs,
+                bbox_to_anchor=(0, 0, 1, 0),
+                bbox_transform=ax.transAxes,
+                borderpad=(0, pad),
+            )
             self._v_axes.insert(0, inax)
         elif direction == "top":
             ax = self._v_axes[-1]
             axes_kwargs.update(sharex=ax)
-            inax = inset_axes(ax,
-                              width="100%",
-                              height=size,
-                              loc='lower left',
-                              axes_class=klass,
-                              axes_kwargs=axes_kwargs,
-                              bbox_to_anchor=(0, 1, 1, 1),
-                              bbox_transform=ax.transAxes,
-                              borderpad=(0, pad))
+            inax = inset_axes(
+                ax,
+                width="100%",
+                height=size,
+                loc='lower left',
+                axes_class=klass,
+                axes_kwargs=axes_kwargs,
+                bbox_to_anchor=(0, 1, 1, 1),
+                bbox_transform=ax.transAxes,
+                borderpad=(0, pad),
+            )
             self._v_axes.append(inax)
 
         # We use WindowExtentProxyArtist so that tight_layout works.
@@ -523,17 +532,24 @@ class PanelMaker:
         else:
             self.divider = AxesDivider(ax)
 
-    def add_panel(self, direction, kind,
-                  pad=0.,
-                  size=None,
-                  axes_class=None,
-                  axes_kwargs=None,
-                  path_effects=None):
-        panel = add_panel(self.divider, direction, kind,
-                          pad=pad,
-                          size=size,
-                          axes_class=axes_class,
-                          axes_kwargs=axes_kwargs,
-                          path_effects=path_effects)
+    def add_panel(
+        self,
+        direction,
+        kind,
+        pad=0.0,
+        size=None,
+        axes_class=None,
+        axes_kwargs=None,
+        path_effects=None,
+    ):
+        panel = add_panel(
+            self.divider,
+            direction,
+            kind,
+            pad=pad,
+            size=size,
+            axes_class=axes_class,
+            axes_kwargs=axes_kwargs,
+            path_effects=path_effects,
+        )
         return panel
-

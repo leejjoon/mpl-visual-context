@@ -1,9 +1,10 @@
 import matplotlib.transforms as mtransforms
 
+
 def spready(artists, yindices, dy=None):
     n = len(artists)
     if dy is None:
-        dy = 1.
+        dy = 1.0
     yoffsets = yindices * dy
     for y, a in zip(yoffsets, artists):
         tr = mtransforms.Affine2D().translate(0, y) + a.axes.transData
@@ -23,4 +24,3 @@ def get_heights(artists):
         yy.append(maxy)
 
     return max(yy)
-

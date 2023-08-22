@@ -13,7 +13,7 @@ from matplotlib.patheffects import Normal
 #         self._registered[name] = pe_list
 
 
-class PathEffectsContainer():
+class PathEffectsContainer:
     _normal = [Normal()]
 
     def __init__(self, registry: dict):
@@ -33,14 +33,17 @@ class PathEffectsContainer():
 def _example():
     # from mpl_visual_context.patheffects import ColorMatrixStroke as CMS
     # from mpl_visual_context.patheffects import HLSModifyStroke
-    registry = dict(grayscale=[],
-                    sepia=[],
-                    warm=[],
-                    cool=[],
-                    bright=[HLSModifyStroke(l="-50%")],
-                    bright_gray=[HLSModifyStroke(l="-50%") | CMS("grayscale")])
+    registry = dict(
+        grayscale=[],
+        sepia=[],
+        warm=[],
+        cool=[],
+        bright=[HLSModifyStroke(l="-50%")],
+        bright_gray=[HLSModifyStroke(l="-50%") | CMS("grayscale")],
+    )
     pec = PathEffectsContainer(registry)
     pec.use("bright")
+
 
 # class ColorModifyStroke(AbstractPathEffect):
 #     pass

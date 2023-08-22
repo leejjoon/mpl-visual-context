@@ -5,7 +5,13 @@ from scipy.interpolate import interp1d
 import matplotlib.colors as mcolors
 
 from matplotlib.transforms import (
-    Affine2D, Bbox, BboxBase, BboxTransformTo, Transform, IdentityTransform)
+    Affine2D,
+    Bbox,
+    BboxBase,
+    BboxTransformTo,
+    Transform,
+    IdentityTransform,
+)
 from matplotlib.artist import Artist
 from matplotlib.image import Bbox, BboxImage
 from matplotlib.transforms import TransformedBbox
@@ -15,10 +21,10 @@ from matplotlib.container import Container
 
 from .mpl_fix import CollectionFix
 
+
 def _get_window_extent(s, renderer):
     bbox = s.get_window_extent(renderer)
-    if ( not np.any(np.isfinite(bbox.get_points()))
-         and isinstance(s, Collection)):
+    if not np.any(np.isfinite(bbox.get_points())) and isinstance(s, Collection):
         bbox = CollectionFix.get_window_extent(s)
     return bbox
 
@@ -74,6 +80,7 @@ class TR:
             See :ref:`plotting-guide-annotation` for more details.
 
     """
+
     def __init__(self):
         pass
         # self.axes = ax
@@ -93,6 +100,7 @@ class TR:
         elif isinstance(s, tuple):
             s1, s2 = s
             from matplotlib.transforms import blended_transform_factory
+
             tr1 = TR.get_xy_transform(renderer, s1, axes=axes)
             tr2 = TR.get_xy_transform(renderer, s2, axes=axes)
             tr = blended_transform_factory(tr1, tr2)
@@ -183,10 +191,8 @@ class TR:
 GRADIENT_DIRECTIONS = ["up", "down", "left", "right"]
 
 
-class _GradBase():
-
-    def __init__(self, x_or_v, v=None,
-                 xmin=0., xmax=1.):
+class _GradBase:
+    def __init__(self, x_or_v, v=None, xmin=0.0, xmax=1.0):
         self.xmin = xmin
         self.xmax = xmax
 
@@ -228,8 +234,7 @@ class GradV(_GradBase):
         return grad.reshape((size, 1))
 
 
-def _gradient_from_string(s,
-                          xmin=0., xmax=1.):
+def _gradient_from_string(s, xmin=0.0, xmax=1.0):
     if ">" in s:
         vv = [float(v) for v in s.split(">")]
         return GradH(vv, xmin=xmin, xmax=xmax)
@@ -240,8 +245,7 @@ def _gradient_from_string(s,
         raise ValueError(f"Unknown gradient string: {s}")
 
 
-def get_gradient_array_from_str(s: str, shape=None,
-                                zmin:float=0, zmax:float=1):
+def get_gradient_array_from_str(s: str, shape=None, zmin: float = 0, zmax: float = 1):
     if s in ["up", "down", "left", "right"]:
         dir = s
         # shape = (128, 256)
@@ -285,6 +289,7 @@ def test_dir():
     d = get_gradient_array_from_str("left")
     assert np.all(d == np.linspace(1, 0, 256).reshape((1, 256)))
 
+
 def test_ss():
     d = get_gradient_array_from_str("0 > 1")
     assert np.all(d == np.linspace(0, 1, 256).reshape((1, 256)))
@@ -302,8 +307,7 @@ def test_ss():
 def get_data_from_str(data, alpha=None, shape=None):
 
     if isinstance(data, str):
-        data = get_gradient_array_from_str(data, # zmin=0, zmax=1,
-                                           shape=shape)
+        data = get_gradient_array_from_str(data, shape=shape)  # zmin=0, zmax=1,
     elif isinstance(data, np.ndarray):
         if shape is not None:
             assert shape == np.broadcast_shapes(data.shape, shape)
@@ -327,6 +331,7 @@ def get_data_from_str(data, alpha=None, shape=None):
 
     return data, alpha
 
+
 def test_da():
     d, a = get_data_from_str("right", alpha=None, shape=None)
     assert np.all(d == np.linspace(0, 1, 256).reshape((1, 256)))
@@ -342,10 +347,10 @@ def test_da():
     # assert np.all(d == np.linspace(0, 1, 256).reshape((1, 256)))
     # assert a is None
 
-class TransformedBboxBase(BboxImage):
-    """BboxImage which support flexible coordinate system similar to the annotation. This should be a base class, and the image  data (and alpha) should be set by the subclass..
 
-    """
+class TransformedBboxBase(BboxImage):
+    """BboxImage which support flexible coordinate system similar to the annotation. This should be a base class, and the image  data (and alpha) should be set by the subclass.."""
+
     def _get_bbox_orig(self, extent, bbox):
         """
         Returns a bbox from the extent if extent is not None, otherwise
@@ -363,14 +368,17 @@ class TransformedBboxBase(BboxImage):
 
         return bbox_orig
 
-    def __init__(self, extent=None, bbox=None, coords="data", axes=None,
-                 **im_kw):
+    def __init__(self, extent=None, bbox=None, coords="data", axes=None, **im_kw):
         self.coords = coords
         self.bbox_orig = self._get_bbox_orig(extent, bbox)
-        BboxImage.__init__(self, Bbox([[0, 0], [0, 0]]), origin="lower",
-                           interpolation="none",
-                           transform=IdentityTransform(),
-                           **im_kw)
+        BboxImage.__init__(
+            self,
+            Bbox([[0, 0], [0, 0]]),
+            origin="lower",
+            interpolation="none",
+            transform=IdentityTransform(),
+            **im_kw,
+        )
         self.axes = axes
 
     def set_extent(self, extent, bbox=None):
@@ -409,9 +417,17 @@ class TransformedBboxBase(BboxImage):
 
 
 class ImageBox(TransformedBboxBase):
-    def __init__(self, data, alpha=None, shape=None,
-                 extent=None, bbox=None, coords="data", axes=None,
-                 **im_kw):
+    def __init__(
+        self,
+        data,
+        alpha=None,
+        shape=None,
+        extent=None,
+        bbox=None,
+        coords="data",
+        axes=None,
+        **im_kw,
+    ):
         """
         data: 2d-ndarray, directional string (up, down, right, left), interp-string ('0. > 0.5 > 0.)
         """
@@ -420,8 +436,7 @@ class ImageBox(TransformedBboxBase):
 
         # we do not support data of mpl color specification for possible
         # comflict with array.
-        super().__init__(extent=extent, bbox=bbox, coords=coords, axes=axes,
-                         **im_kw)
+        super().__init__(extent=extent, bbox=bbox, coords=coords, axes=axes, **im_kw)
         self.init_data_n_alpha(data, alpha=alpha, shape=shape)
 
     def init_data_n_alpha(self, data, alpha=None, shape=None):
@@ -444,16 +459,16 @@ class ImageBox(TransformedBboxBase):
     #                            unsampled=unsampled)
     #     v[0][:, :, 3] = self._alpha_array
     #     return v
-        # # docstring inherited
-        # width, height = renderer.get_canvas_width_height()
-        # bbox_in = self.get_window_extent(renderer).frozen()
-        # bbox_in._points /= [width, height]
-        # bbox_out = self.get_window_extent(renderer)
-        # clip = Bbox([[0, 0], [width, height]])
-        # self._transform = BboxTransformTo(clip)
-        # return self._make_image(
-        #     self._A,
-        #     bbox_in, bbox_out, clip, magnification, unsampled=unsampled)
+    # # docstring inherited
+    # width, height = renderer.get_canvas_width_height()
+    # bbox_in = self.get_window_extent(renderer).frozen()
+    # bbox_in._points /= [width, height]
+    # bbox_out = self.get_window_extent(renderer)
+    # clip = Bbox([[0, 0], [width, height]])
+    # self._transform = BboxTransformTo(clip)
+    # return self._make_image(
+    #     self._A,
+    #     bbox_in, bbox_out, clip, magnification, unsampled=unsampled)
 
     def _convert_data(self, data, alpha=None, shape=None):
         # if alpha in GRADIENT_DIRECTIONS:
@@ -465,22 +480,40 @@ class ImageBox(TransformedBboxBase):
     def _check_unsampled_image(self):
         return True
 
-    def _make_image(self, A, in_bbox, out_bbox, clip_bbox, magnification=1.0,
-                    unsampled=False, round_to_pixel_border=True):
+    def _make_image(
+        self,
+        A,
+        in_bbox,
+        out_bbox,
+        clip_bbox,
+        magnification=1.0,
+        unsampled=False,
+        round_to_pixel_border=True,
+    ):
         if not unsampled:
-            return super()._make_image(A, in_bbox, out_bbox, clip_bbox,
-                                       magnification=magnification,
-                                       unsampled=unsampled,
-                                       round_to_pixel_border=round_to_pixel_border)
+            return super()._make_image(
+                A,
+                in_bbox,
+                out_bbox,
+                clip_bbox,
+                magnification=magnification,
+                unsampled=unsampled,
+                round_to_pixel_border=round_to_pixel_border,
+            )
 
         else:
             # FIXME for unsampled, alpha may not be
             # respected. This is a workaround.
             self._respect_alpha = True
-            r = super()._make_image(A, in_bbox, out_bbox, clip_bbox,
-                                    magnification=magnification,
-                                    unsampled=unsampled,
-                                    round_to_pixel_border=round_to_pixel_border)
+            r = super()._make_image(
+                A,
+                in_bbox,
+                out_bbox,
+                clip_bbox,
+                magnification=magnification,
+                unsampled=unsampled,
+                round_to_pixel_border=round_to_pixel_border,
+            )
             self._respect_alpha = False
             return r
 
@@ -496,14 +529,21 @@ class ImageBox(TransformedBboxBase):
 
 class ColorBoxBase(ABC, TransformedBboxBase):
     """image of single color with alpha gradient"""
-    def __init__(self, alpha, shape=None,
-                 extent=None, bbox=None, coords="data", axes=None,
-                 **im_kw):
-        super().__init__(extent=extent, bbox=bbox, coords=coords, axes=axes,
-                         **im_kw)
+
+    def __init__(
+        self,
+        alpha,
+        shape=None,
+        extent=None,
+        bbox=None,
+        coords="data",
+        axes=None,
+        **im_kw,
+    ):
+        super().__init__(extent=extent, bbox=bbox, coords=coords, axes=axes, **im_kw)
         # The shape of image is determined by the shape of alpha
         self._alpha_array = get_gradient_array_from_str(alpha, shape=shape)
-        self._A = np.zeros(self._alpha_array.shape + (4, ), dtype=float)
+        self._A = np.zeros(self._alpha_array.shape + (4,), dtype=float)
 
     def _check_unsampled_image(self):
         return True
@@ -532,18 +572,17 @@ class ColorBoxBase(ABC, TransformedBboxBase):
 
 
 class ColorBox(ColorBoxBase):
-    def __init__(self, color, alpha,
-                 extent=None, bbox=None, coords="data", axes=None,
-                 **im_kw):
-        super().__init__(alpha, extent=extent, bbox=bbox, coords=coords,
-                         axes=axes,
-                         **im_kw)
+    def __init__(
+        self, color, alpha, extent=None, bbox=None, coords="data", axes=None, **im_kw
+    ):
+        super().__init__(
+            alpha, extent=extent, bbox=bbox, coords=coords, axes=axes, **im_kw
+        )
 
         self.set_color(color)
         # _A is internal array that is used by to show the image. For this to
         # work, _check_unsampled_image method should return True.
         self.update_A()
-
 
     def set_color(self, color):
         self._color = color
@@ -553,12 +592,12 @@ class ColorBox(ColorBoxBase):
 
 
 class ColorBoxLazy(ColorBoxBase):
-    def __init__(self, alpha,
-                 extent=None, bbox=None, coords="data", axes=None,
-                 **im_kw):
-        super().__init__(alpha, extent=extent, bbox=bbox, coords=coords,
-                         axes=axes,
-                         **im_kw)
+    def __init__(
+        self, alpha, extent=None, bbox=None, coords="data", axes=None, **im_kw
+    ):
+        super().__init__(
+            alpha, extent=extent, bbox=bbox, coords=coords, axes=axes, **im_kw
+        )
         self._color = None
 
     def set_color(self, color):

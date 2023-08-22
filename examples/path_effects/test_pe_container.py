@@ -7,21 +7,23 @@ PathEffects Container
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from mpl_visual_context.patheffects import (HLSModify,
-                                            ColorMatrix as CMS,
-                                            PathEffectsContainer)
+from mpl_visual_context.patheffects import (
+    HLSModify,
+    ColorMatrix as CMS,
+    PathEffectsContainer,
+)
+
 
 def test():
     df_peng = sns.load_dataset("penguins")
 
     # registry of path_effects
-    registry = dict(bright=[HLSModify(l="-50%")],
-                    bright_gray=[HLSModify(l="-50%") | CMS("grayscale")])
+    registry = dict(
+        bright=[HLSModify(l="-50%")],
+        bright_gray=[HLSModify(l="-50%") | CMS("grayscale")],
+    )
 
-    fig, axl = plt.subplots(1, 3,
-                            figsize=(11, 3),
-                            constrained_layout=True,
-                            clear=True)
+    fig, axl = plt.subplots(1, 3, figsize=(11, 3), constrained_layout=True, clear=True)
 
     ax = axl[0]
     sns.countplot(y="species", data=df_peng, ax=ax)
@@ -47,6 +49,7 @@ def test():
     pe.use("bright_gray")
 
     plt.show()
+
 
 if __name__ == '__main__':
     test()

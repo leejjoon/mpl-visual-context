@@ -3,7 +3,6 @@ from abc import abstractmethod
 
 
 class ChainablePathEffect(AbstractPathEffect):
-
     def __or__(self, other):
         if isinstance(other, ChainablePathEffect):
             return ChainedPathEffect(self, other)
@@ -45,6 +44,7 @@ class PathEffectTerminated(AbstractPathEffect):
     """
     Chained Patheffect that no longer can be chained, because the last patheffect is not chainable.
     """
+
     def __init__(self, pe1: ChainablePathEffect, pe2: AbstractPathEffect):
         if isinstance(pe1, ChainedPathEffect):
             self._pe_list = pe1._pe_list

@@ -54,7 +54,7 @@ def get_image_value_at_bbox(im, bbox, renderer=None):
     if bb is None:
         return None
 
-    x, y = 0.5*(bb.x0 + bb.x1), 0.5*(bb.y0 + bb.y1)
+    x, y = 0.5 * (bb.x0 + bb.x1), 0.5 * (bb.y0 + bb.y1)
 
     # if im.origin == 'upper':
     #     ymin, ymax = ymax, ymin
@@ -72,6 +72,7 @@ def get_image_value_at_bbox(im, bbox, renderer=None):
         return None
     else:
         return arr[i, j]
+
 
 class ValueFromImage(AbstractPathEffect):
     def __init__(self, im, drop_shadow=True):
@@ -91,7 +92,7 @@ class ValueFromImage(AbstractPathEffect):
             h, l, s = colorsys.rgb_to_hls(r, g, b)
             rgbFace = [1, 1, 1] if l < 0.5 else [0, 0, 0]
         else:
-            rgbFace = [1., 0, 0]
+            rgbFace = [1.0, 0, 0]
 
         return foreground, rgbFace
 
@@ -100,25 +101,20 @@ class ValueFromImage(AbstractPathEffect):
         gc0.copy_properties(gc)
 
         alpha = self.im.get_alpha()
-        alpha = 1. if alpha is None else alpha
+        alpha = 1.0 if alpha is None else alpha
 
         v = self._get_image_value(renderer, gc, tpath, affine, rgbFace)
-        foreground0, rgbFace0 = self._get_color_for_value(v, gc.get_rgb(),
-                                                          rgbFace)
+        foreground0, rgbFace0 = self._get_color_for_value(v, gc.get_rgb(), rgbFace)
 
         if self.drop_shadow:
             rgb = self.im.to_rgba(v)
             gc0.set_foreground(rgb)
-            gc0.set_alpha(0.3*alpha)
+            gc0.set_alpha(0.3 * alpha)
             gc0.set_linewidth(5)
-            renderer.draw_path(
-                gc0, tpath, affine, rgbFace0)
+            renderer.draw_path(gc0, tpath, affine, rgbFace0)
 
-            gc0.set_alpha(0.7*alpha)
+            gc0.set_alpha(0.7 * alpha)
             gc0.set_linewidth(2.5)
-            renderer.draw_path(
-                gc0, tpath, affine, rgbFace0)
+            renderer.draw_path(gc0, tpath, affine, rgbFace0)
 
-        renderer.draw_path(
-            gc, tpath, affine, rgbFace0)
-
+        renderer.draw_path(gc, tpath, affine, rgbFace0)

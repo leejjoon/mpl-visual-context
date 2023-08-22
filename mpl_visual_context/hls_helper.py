@@ -10,9 +10,9 @@ def _convert_scale_or_const(v1):
         if v1[-1] == "%":
             f = float(v1[:-1]) / 100
             if f > 0:
-                return  (f, 0)
+                return (f, 0)
             else:
-                return  (-f, 1+f)
+                return (-f, 1 + f)
     return (0, v1)
 
 
@@ -27,21 +27,23 @@ class HLSModify_axb:
             assert isinstance(a, Number) and isinstance(b, Number)
             return a, b
         except:
-            raise ValueError("Unsupported parameter: requires a single number a seuqence of two numbers")
+            raise ValueError(
+                "Unsupported parameter: requires a single number a seuqence of two numbers"
+            )
 
     def __repr__(self):
         # "HLSab: h={self.hls_a[0]}xh + "
-        s_hls = ", ".join([f"{n}'={a}*{n}+{b}" for n, a, b in
-                           zip("hls", self.hls_a, self.hls_b)])
+        s_hls = ", ".join(
+            [f"{n}'={a}*{n}+{b}" for n, a, b in zip("hls", self.hls_a, self.hls_b)]
+        )
         s_alpha = f"a'={self.alpha_a}*a+{self.alpha_b}"
 
         return f"HLSModify({s_hls}, {s_alpha})"
 
-    def __init__(self, h_ab=(1, 0), l_ab=(1, 0), s_ab=(1, 0),
-                 alpha_ab=(1, 0),
-                 clip_mode="clip"):
-        """
-        """
+    def __init__(
+        self, h_ab=(1, 0), l_ab=(1, 0), s_ab=(1, 0), alpha_ab=(1, 0), clip_mode="clip"
+    ):
+        """ """
         super().__init__()
         h_a, h_b = self._check_ab(h_ab)
         l_a, l_b = self._check_ab(l_ab)

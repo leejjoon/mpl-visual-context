@@ -16,9 +16,11 @@ class CollectionFix(Collection):
 
         transform = self.get_transform()
         offset_trf = self.get_offset_transform()
-        if not (isinstance(offset_trf, transforms.IdentityTransform)
-                or offset_trf.contains_branch(transData)
-                or isinstance(transData, transforms.IdentityTransform)):
+        if not (
+            isinstance(offset_trf, transforms.IdentityTransform)
+            or offset_trf.contains_branch(transData)
+            or isinstance(transData, transforms.IdentityTransform)
+        ):
             # if the offsets are in some coords other than data,
             # then don't use them for autoscaling.
             return transforms.Bbox.null()
@@ -37,8 +39,9 @@ class CollectionFix(Collection):
             # be careful to only apply the affine part that remains.
 
         # if any(transform.contains_branch_seperately(transData)):
-        if (any(transform.contains_branch_seperately(transData)) or
-            isinstance(transData, transforms.IdentityTransform)):
+        if any(transform.contains_branch_seperately(transData)) or isinstance(
+            transData, transforms.IdentityTransform
+        ):
             # collections that are just in data units (like quiver)
             # can properly have the axes limits set by their shape +
             # offset.  LineCollections that have no offsets can
@@ -47,10 +50,12 @@ class CollectionFix(Collection):
                 offsets = offsets.filled(np.nan)
                 # get_path_collection_extents handles nan but not masked arrays
             return mpath.get_path_collection_extents(
-                transform.get_affine() - transData, paths,
+                transform.get_affine() - transData,
+                paths,
                 self.get_transforms(),
                 offset_trf.transform_non_affine(offsets),
-                offset_trf.get_affine().frozen())
+                offset_trf.get_affine().frozen(),
+            )
 
         # NOTE: None is the default case where no offsets were passed in
         if self._offsets is not None:

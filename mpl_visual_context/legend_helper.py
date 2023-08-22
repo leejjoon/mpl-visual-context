@@ -1,4 +1,3 @@
-
 def extract_offset_boxes_from_legend(legend):
     bboxes = []
     for vpacker in legend._legend_handle_box.get_children():

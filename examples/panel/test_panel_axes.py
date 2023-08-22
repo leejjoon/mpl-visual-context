@@ -7,6 +7,7 @@ Panel Placement
 import matplotlib.pyplot as plt
 
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
+
 # from mpl_visual_context.axes_panel import axis_to_panels, title_to_panel
 from mpl_visual_context.axes_panel import InsetDivider, AxesDivider
 from mpl_visual_context.axes_panel import add_panel
@@ -14,11 +15,10 @@ from mpl_visual_context.axes_panel import add_panel
 fig, axs = plt.subplots(2, 2, num=1, clear=True)
 fig.tight_layout()
 
-for ax, which in zip(axs.flat,
-                     [["label"],
-                      ["ticklabels"],
-                      ["label", "ticklabels"],
-                      ["ticklabels", "label"]]):
+for ax, which in zip(
+    axs.flat,
+    [["label"], ["ticklabels"], ["label", "ticklabels"], ["ticklabels", "label"]],
+):
 
     ax.set_ylabel("Y-label")
     ax.set_xlabel("X-label")

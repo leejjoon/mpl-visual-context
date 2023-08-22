@@ -28,6 +28,6 @@ p = ax.collections[0]
 
 # The 1st half of the path is the bottom line, thus we only strke the 2nd half,
 # and do not close the path.
-p.set_path_effects([Partial(0.5, 1.) | Open()])
+p.set_path_effects([Partial(0.5, 1.0) | Open()])
 
 plt.show()

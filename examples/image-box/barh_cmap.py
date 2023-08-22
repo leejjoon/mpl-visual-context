@@ -11,6 +11,7 @@ import numpy as np
 # import seaborn as sns
 # sns.set_theme()
 import mplcyberpunk
+
 plt.style.use("cyberpunk")
 
 # Fixing random state for reproducibility
@@ -24,6 +25,7 @@ y_pos = np.arange(len(people))
 performance = 3 + 10 * np.random.rand(len(people))
 error = np.random.rand(len(people))
 
+
 def draw_ax(ax):
     bars = ax.barh(y_pos, performance, xerr=error, align='center')
     ax.set_yticks(y_pos, labels=people)
@@ -32,6 +34,7 @@ def draw_ax(ax):
     ax.set_title('How fast do you want to go today?')
 
     return bars
+
 
 from mpl_visual_context.patheffects import FillImage, AlphaGradient
 from mpl_visual_context.image_box import ImageBox
@@ -46,9 +49,7 @@ for p in bars:
 ax = axs[1]
 bars = draw_ax(ax)
 
-bbox_image = ImageBox("right", alpha="right",
-                      extent=[0, 0, 1., 1],
-                      coords=bars)
+bbox_image = ImageBox("right", alpha="right", extent=[0, 0, 1.0, 1], coords=bars)
 
 pe = [FillImage(bbox_image, ax=ax)]
 

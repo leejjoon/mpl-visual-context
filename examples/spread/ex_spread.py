@@ -22,14 +22,17 @@ df["x"] += m
 
 fig, ax = plt.subplots(1, 1, num=1, clear=True)
 
-sns.kdeplot(df,
-            x="x",
-            hue="g",
-            ax=ax,
-            fill=True, linewidth=2,
-            clip_on=False,
-            ec="w", alpha=1,
-            )
+sns.kdeplot(
+    df,
+    x="x",
+    hue="g",
+    ax=ax,
+    fill=True,
+    linewidth=2,
+    clip_on=False,
+    ec="w",
+    alpha=1,
+)
 
 from mpl_visual_context.spreader import spready
 

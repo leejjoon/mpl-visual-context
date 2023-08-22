@@ -6,11 +6,13 @@ from matplotlib import colormaps
 
 # Adopted from mplcyber
 class Glow(AbstractPathEffect):
-    def __init__(self,
-                 n_glow_lines: int = 10,
-                 diff_linewidth: float = 1.05,
-                 alpha_line: float = 0.3,
-                 offset=(0, 0)):
+    def __init__(
+        self,
+        n_glow_lines: int = 10,
+        diff_linewidth: float = 1.05,
+        alpha_line: float = 0.3,
+        offset=(0, 0),
+    ):
         self.n_glow_lines = n_glow_lines
         self.diff_linewidth = diff_linewidth
         self.alpha_line = alpha_line
@@ -24,8 +26,8 @@ class Glow(AbstractPathEffect):
 
         alpha0 = gc.get_alpha()
 
-        aa = np.arange(1, self.n_glow_lines+1)
-        linewidths = gc0.get_linewidth() + aa*self.diff_linewidth
+        aa = np.arange(1, self.n_glow_lines + 1)
+        linewidths = gc0.get_linewidth() + aa * self.diff_linewidth
 
         gc0.set_alpha(alpha0 * self.alpha_line / self.n_glow_lines)
 
@@ -37,21 +39,22 @@ class Glow(AbstractPathEffect):
         for lw, o in zip(linewidths, oo):
             gc0.set_linewidth(lw)
             offset = mtransforms.Affine2D().translate(
-                *map(renderer.points_to_pixels, [o*self.xoffset,
-                                                 o*self.yoffset]))
+                *map(renderer.points_to_pixels, [o * self.xoffset, o * self.yoffset])
+            )
 
-
-            renderer.draw_path(
-                gc0, tpath, affine + offset, None)
+            renderer.draw_path(gc0, tpath, affine + offset, None)
 
 
 class CmapGlow(AbstractPathEffect):
-    def __init__(self,
-                 cmap,
-                 nlevel=10,
-                 diff_linewidth=5,
-                 alpha_line: float = 0.3,
-                 xoffset=0, yoffset=0):
+    def __init__(
+        self,
+        cmap,
+        nlevel=10,
+        diff_linewidth=5,
+        alpha_line: float = 0.3,
+        xoffset=0,
+        yoffset=0,
+    ):
         self.cmap = colormaps.get_cmap(cmap)
         self.nlevel = nlevel
         self.diff_linewidth = diff_linewidth
@@ -67,7 +70,7 @@ class CmapGlow(AbstractPathEffect):
         alpha0 = gc.get_alpha()
 
         aa = np.linspace(1, 0, self.nlevel)
-        linewidths = gc0.get_linewidth() + aa*self.diff_linewidth
+        linewidths = gc0.get_linewidth() + aa * self.diff_linewidth
 
         if self.alpha_line is not None:
             gc0.set_alpha(alpha0 * self.alpha_line / self.nlevel)
@@ -78,9 +81,7 @@ class CmapGlow(AbstractPathEffect):
             gc0.set_linewidth(lw)
             gc0.set_foreground(self.cmap(o))
             offset = mtransforms.Affine2D().translate(
-                *map(renderer.points_to_pixels, [o*self.xoffset,
-                                                 o*self.yoffset]))
+                *map(renderer.points_to_pixels, [o * self.xoffset, o * self.yoffset])
+            )
 
-            renderer.draw_path(
-                gc0, tpath, affine + offset, None)
-
+            renderer.draw_path(gc0, tpath, affine + offset, None)

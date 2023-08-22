@@ -39,19 +39,20 @@ t2 = ax.text(
 from matplotlib.patheffects import Normal
 from mpl_visual_context.patheffects import GCModify, Offset, FillColor
 from mpl_visual_context.patheffects import Glow, CmapGlow
+
 cmap = plt.cm.viridis
 # cmap = plt.cm.magma
 
-pe1 = [CmapGlow(cmap, diff_linewidth=10, alpha_line=1,
-                xoffset=5, yoffset=-5),
-       GCModify(foreground=cmap(0.), linewidth=0.5)
-       | FillColor(cmap(1.))
-       ]
+pe1 = [
+    CmapGlow(cmap, diff_linewidth=10, alpha_line=1, xoffset=5, yoffset=-5),
+    GCModify(foreground=cmap(0.0), linewidth=0.5) | FillColor(cmap(1.0)),
+]
 
-pe2 = [Offset(2, -2) | Glow(diff_linewidth=1.2),
-       Offset(1, -1),
-       FillColor("white"),
-       ]
+pe2 = [
+    Offset(2, -2) | Glow(diff_linewidth=1.2),
+    Offset(1, -1),
+    FillColor("white"),
+]
 
 
 t1.set_path_effects(pe1)

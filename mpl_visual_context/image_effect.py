@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 from matplotlib.patheffects import AbstractPathEffect, Normal
 from matplotlib import cbook
+
 # from .patheffects import StrokeOnly, GCModify
 import scipy.ndimage as NI
 
@@ -41,6 +42,7 @@ import scipy.ndimage as NI
 #                 img = np.asarray(img * 255., np.uint8)
 #             renderer.draw_image(gc, x/scale_factor, y/scale_factor, img)
 
+
 class ImageEffectBase(ABC):
     @abstractmethod
     def process_image(self, dpi, scale_factor, x, y, img):
@@ -61,8 +63,9 @@ class ChainedImageEffect(ChainableImageEffect):
 
     def process_image(self, dpi, scale_factor, x, y, img):
         for ie in self._ie_list:
-            dpi, scale_factor, x, y, img = \
-                ie.process_image(dpi, scale_factor, x, y, img)
+            dpi, scale_factor, x, y, img = ie.process_image(
+                dpi, scale_factor, x, y, img
+            )
 
         return dpi, scale_factor, x, y, img
 
@@ -75,9 +78,17 @@ class Offset(ChainableImageEffect):
         self.oy = oy
 
     def process_image(self, dpi, scale_factor, x, y, img):
-        return dpi, scale_factor, x + scale_factor*self.ox, y + scale_factor*self.oy, img
+        return (
+            dpi,
+            scale_factor,
+            x + scale_factor * self.ox,
+            y + scale_factor * self.oy,
+            img,
+        )
+
 
 import matplotlib.colors as mcolors
+
 
 class Fill(ChainableImageEffect):
     def __init__(self, c):
@@ -92,7 +103,7 @@ class Fill(ChainableImageEffect):
 
 
 class Pad(ChainableImageEffect):
-    def __init__(self, pad, pady=None, *, rgb_fill=1., alpha_fill=0.):
+    def __init__(self, pad, pady=None, *, rgb_fill=1.0, alpha_fill=0.0):
         "ox, oy in points (72 dpi)"
         super().__init__()
         # self.sigma = sigma
@@ -107,18 +118,20 @@ class Pad(ChainableImageEffect):
     def process_image(self, dpi, scale_factor, x, y, img):
 
         padx_, pady_ = self.get_pad()
-        pads = int(padx_*scale_factor), int(pady_*scale_factor)
+        pads = int(padx_ * scale_factor), int(pady_ * scale_factor)
 
-        img_rgb = np.pad(img[:, :, :3], [pads, pads, (0, 0)],
-                         "constant",
-                         constant_values=self.rgb_fill)
-        img_alpha = np.pad(img[:, :, 3], [pads, pads],
-                           "constant",
-                           constant_values=self.alpha_fill)
-        tgt_image = np.concatenate([img_rgb, img_alpha[:, :, np.newaxis]],
-                                   axis=-1)
+        img_rgb = np.pad(
+            img[:, :, :3],
+            [pads, pads, (0, 0)],
+            "constant",
+            constant_values=self.rgb_fill,
+        )
+        img_alpha = np.pad(
+            img[:, :, 3], [pads, pads], "constant", constant_values=self.alpha_fill
+        )
+        tgt_image = np.concatenate([img_rgb, img_alpha[:, :, np.newaxis]], axis=-1)
 
-        return dpi, scale_factor, x-pads[0], y-pads[1], tgt_image
+        return dpi, scale_factor, x - pads[0], y - pads[1], tgt_image
 
 
 class Dilation(ChainableImageEffect):
@@ -132,6 +145,7 @@ class Dilation(ChainableImageEffect):
         img = NI.grey_dilation(img, size=[size, size, 1])
 
         return dpi, scale_factor, x, y, img
+
 
 class Erosion(ChainableImageEffect):
     def __init__(self, size):
@@ -148,10 +162,11 @@ class Erosion(ChainableImageEffect):
 
 from matplotlib.colors import LightSource as _LightSource
 
+
 class LightSourceBase(ChainableImageEffect):
-    def __init__(self, fraction=1, vert_exag=1,
-                 blend_mode="overlay",
-                 azdeg=315, altdeg=45):
+    def __init__(
+        self, fraction=1, vert_exag=1, blend_mode="overlay", azdeg=315, altdeg=45
+    ):
         super().__init__()
         self.light_source = _LightSource(azdeg=azdeg, altdeg=altdeg)
         self.fraction = fraction
@@ -170,22 +185,35 @@ class LightSourceBase(ChainableImageEffect):
         # introduce shades. To prevent this, we simply clip the rgb values
         # between 0.2 and 0.8
         rgb = np.clip(img[:, :, :-1], 0.2, 0.8)
-        rgb2 = self.light_source.shade_rgb(rgb, elev,
-                                           fraction=self.fraction,
-                                           vert_exag=self.vert_exag,
-                                           blend_mode=self.blend_mode)
-        out = np.concatenate([rgb2, img[:,:,3:]], -1)
+        rgb2 = self.light_source.shade_rgb(
+            rgb,
+            elev,
+            fraction=self.fraction,
+            vert_exag=self.vert_exag,
+            blend_mode=self.blend_mode,
+        )
+        out = np.concatenate([rgb2, img[:, :, 3:]], -1)
         return dpi, scale_factor, x, y, out
 
 
 class LightSource(LightSourceBase):
-    def __init__(self, erosion_size=3, gaussian_size=3,
-                 fraction=1, vert_exag=1,
-                 blend_mode="overlay",
-                 azdeg=315, altdeg=45):
-        super().__init__(fraction=fraction, vert_exag=vert_exag,
-                         blend_mode=blend_mode,
-                         azdeg=azdeg, altdeg=altdeg)
+    def __init__(
+        self,
+        erosion_size=3,
+        gaussian_size=3,
+        fraction=1,
+        vert_exag=1,
+        blend_mode="overlay",
+        azdeg=315,
+        altdeg=45,
+    ):
+        super().__init__(
+            fraction=fraction,
+            vert_exag=vert_exag,
+            blend_mode=blend_mode,
+            azdeg=azdeg,
+            altdeg=altdeg,
+        )
 
         self.erosion_size = erosion_size
         self.gaussian_size = gaussian_size
@@ -208,12 +236,23 @@ class LightSource(LightSourceBase):
 
 
 class LightSourceSharp(LightSourceBase):
-    def __init__(self, dist_max=None, dist_min=0, fraction=1,
-                 blend_mode="overlay", vert_exag=1,
-                 azdeg=315, altdeg=45):
-        super().__init__(fraction=fraction, vert_exag=vert_exag,
-                         blend_mode=blend_mode,
-                         azdeg=azdeg, altdeg=altdeg)
+    def __init__(
+        self,
+        dist_max=None,
+        dist_min=0,
+        fraction=1,
+        blend_mode="overlay",
+        vert_exag=1,
+        azdeg=315,
+        altdeg=45,
+    ):
+        super().__init__(
+            fraction=fraction,
+            vert_exag=vert_exag,
+            blend_mode=blend_mode,
+            azdeg=azdeg,
+            altdeg=altdeg,
+        )
 
         self.dist_max = dist_max
         self.dist_min = dist_min
@@ -257,6 +296,7 @@ class Gaussian(ChainableImageEffect):
 
         return dpi, scale_factor, x, y, tgt_image
 
+
 class AlphaAxb(ChainableImageEffect):
     def __init__(self, alpha_ab):
         "ox, oy in points (72 dpi)"
@@ -269,7 +309,6 @@ class AlphaAxb(ChainableImageEffect):
     def process_image(self, dpi, scale_factor, x, y, img):
         img2 = img.copy()
         a, b = self.alpha_ab
-        img2[:,:,3] = a * img2[:, :, 3] + b
+        img2[:, :, 3] = a * img2[:, :, 3] + b
 
         return dpi, scale_factor, x, y, img2
-

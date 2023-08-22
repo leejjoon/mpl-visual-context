@@ -29,7 +29,9 @@ class FillImage(AbstractPathEffect):
             im.set_clip_box(clipbox)
 
         if kwargs:
-            raise ValueError("Unknown keyword argument {}".format(", ".join(kwargs.keys())))
+            raise ValueError(
+                "Unknown keyword argument {}".format(", ".join(kwargs.keys()))
+            )
 
         self.im = im
 
@@ -100,11 +102,9 @@ class FillImage(AbstractPathEffect):
 
 from .image_box import get_gradient_array_from_str
 
-class AlphaGradient(AbstractPathEffect):
 
-    def __init__(self, alphas, extent=None, bbox=None,
-                 coords=None, axes=None,
-                 **im_kw):
+class AlphaGradient(AbstractPathEffect):
+    def __init__(self, alphas, extent=None, bbox=None, coords=None, axes=None, **im_kw):
 
         self.extent = [0, 0, 1, 1] if extent is None else extent
         self.coords = coords
@@ -119,15 +119,15 @@ class AlphaGradient(AbstractPathEffect):
         # if len(alphas.shape) != 2:
         #     raise ValueError()
 
-        self._image_bbox = ColorBoxLazy(alphas,
-                                        bbox=bbox, coords=coords,
-                                        axes=axes,
-                                        **im_kw)
+        self._image_bbox = ColorBoxLazy(
+            alphas, bbox=bbox, coords=coords, axes=axes, **im_kw
+        )
 
     def draw_path(self, renderer, gc, tpath, affine, rgbFace):
         self._image_bbox.set_color(rgbFace)
         coords = self.coords
         if coords is None:
+
             def get_extent(renderer):
                 bbox_out = tpath.get_extents()
                 tr = BboxTransformTo(bbox_out)

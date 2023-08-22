@@ -13,8 +13,8 @@ class Partial(ChainablePathEffect):
         codes, vertices = tpath.codes, tpath.vertices
         n = len(codes)
         start, stop = self._start, self._stop
-        start = start if isinstance(start, int) else int(start*n)
-        stop = stop if isinstance(stop, int) else int(stop*n)
+        start = start if isinstance(start, int) else int(start * n)
+        stop = stop if isinstance(stop, int) else int(stop * n)
 
         # FIXME It does not support splines yet.
         vertices = vertices[start:stop]
@@ -27,12 +27,10 @@ class Partial(ChainablePathEffect):
 
 
 class Open(ChainablePathEffect):
-
     def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
         codes, vertices = tpath.codes, tpath.vertices
 
-        codes = [c if c != tpath.CLOSEPOLY else tpath.STOP
-                 for c in codes]
+        codes = [c if c != tpath.CLOSEPOLY else tpath.STOP for c in codes]
 
         new_tpath = Path._fast_from_codes_and_verts(vertices, codes)
 
@@ -40,14 +38,12 @@ class Open(ChainablePathEffect):
 
 
 class StrokeOnly(ChainablePathEffect):
-
     def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
 
         return renderer, gc, tpath, affine, None
 
 
 class FillOnly(ChainablePathEffect):
-
     def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
         gc0 = renderer.new_gc()
         gc0.copy_properties(gc)
@@ -57,7 +53,6 @@ class FillOnly(ChainablePathEffect):
 
 
 class ClipPathFromPatch(ChainablePathEffect):
-
     def __init__(self, patch):
         """
         The path will be stroked with its gc updated with the given
@@ -71,8 +66,9 @@ class ClipPathFromPatch(ChainablePathEffect):
         if self.patch is not None:
             gc0 = renderer.new_gc()  # Don't modify gc, but a copy!
             gc0.copy_properties(gc)
-            pp = mtransforms.TransformedPath(self.patch.get_path(),
-                                             self.patch.get_transform())
+            pp = mtransforms.TransformedPath(
+                self.patch.get_path(), self.patch.get_transform()
+            )
             gc0.set_clip_path(pp)
         else:
             gc0 = gc
@@ -81,7 +77,6 @@ class ClipPathFromPatch(ChainablePathEffect):
 
 
 class ClipPathSelf(ChainablePathEffect):
-
     def __init__(self):
         """
         The path will be stroked with its gc updated with the given

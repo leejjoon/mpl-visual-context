@@ -29,17 +29,16 @@ class ColorModifyStroke(ChainablePathEffect):
 
 
 class HLSaxb(ColorModifyStroke):
-
-    def __init__(self, h_ab=(1, 0), l_ab=(1, 0), s_ab=(1, 0), alpha_ab=(1, 0),
-                 clip_mode="clip"):
+    def __init__(
+        self, h_ab=(1, 0), l_ab=(1, 0), s_ab=(1, 0), alpha_ab=(1, 0), clip_mode="clip"
+    ):
         """
         The path will be stroked with its gc updated with the given
         keyword arguments, i.e., the keyword arguments should be valid
         gc parameter values.
         """
         super().__init__()
-        self._modifier = HLSModify_axb(h_ab, l_ab, s_ab, alpha_ab,
-                                       clip_mode=clip_mode)
+        self._modifier = HLSModify_axb(h_ab, l_ab, s_ab, alpha_ab, clip_mode=clip_mode)
 
     def apply_to_color(self, c):
         return self._modifier.apply_to_color(c)
@@ -51,14 +50,24 @@ class HLSaxb(ColorModifyStroke):
 class HLSModify(HLSaxb):
     """A line based PathEffect which re-draws a stroke."""
 
-    def __init__(self, h="100%", l="100%", s="100%", alpha="100%",
-                 dh=0, dl=0, ds=0, dalpha=0, clip_mode="clip"):
+    def __init__(
+        self,
+        h="100%",
+        l="100%",
+        s="100%",
+        alpha="100%",
+        dh=0,
+        dl=0,
+        ds=0,
+        dalpha=0,
+        clip_mode="clip",
+    ):
         hls_ab = [_convert_scale_or_const(v) for v in [h, l, s, alpha]]
-        h, l, s, alpha = [(a, b+dd) for (a, b), dd in
-                          zip(hls_ab,  [dh, dl, ds, dalpha])]
+        h, l, s, alpha = [
+            (a, b + dd) for (a, b), dd in zip(hls_ab, [dh, dl, ds, dalpha])
+        ]
 
-        super().__init__(h_ab=h, l_ab=l, s_ab=s, alpha_ab=alpha,
-                         clip_mode=clip_mode)
+        super().__init__(h_ab=h, l_ab=l, s_ab=s, alpha_ab=alpha, clip_mode=clip_mode)
 
 
 class ColorMatrix(ColorModifyStroke):
@@ -83,7 +92,6 @@ class ColorMatrix(ColorModifyStroke):
 
 
 class FillColor(ChainablePathEffect):
-
     def __init__(self, fillcolor):
         self._fillcolor = mcolors.to_rgba(fillcolor) if fillcolor else None
 
@@ -93,7 +101,6 @@ class FillColor(ChainablePathEffect):
 
 
 class StrokeColor(ChainablePathEffect):
-
     def __init__(self, c):
         super().__init__()
         self._stroke_color = c
@@ -108,7 +115,6 @@ class StrokeColor(ChainablePathEffect):
 
 
 class StrokeColorFromFillColor(ChainablePathEffect):
-
     def __init__(self):
         super().__init__()
 
@@ -121,7 +127,6 @@ class StrokeColorFromFillColor(ChainablePathEffect):
 
 
 class FillColorFromStrokeColor(ChainablePathEffect):
-
     def __init__(self):
         super().__init__()
 

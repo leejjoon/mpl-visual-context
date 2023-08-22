@@ -5,21 +5,32 @@ from .path_effects_container import PathEffectsContainer
 
 from .patheffects_base import ChainablePathEffect
 
-from .patheffects_color import (HLSModify, HLSaxb,
-                                ColorMatrix,
-                                FillColor, StrokeColor,
-                                FillColorFromStrokeColor,
-                                StrokeColorFromFillColor)
-from .patheffects_path import (Partial, Open, FillOnly, StrokeOnly,
-                               ClipPathFromPatch, ClipPathSelf)
+from .patheffects_color import (
+    HLSModify,
+    HLSaxb,
+    ColorMatrix,
+    FillColor,
+    StrokeColor,
+    FillColorFromStrokeColor,
+    StrokeColorFromFillColor,
+)
+from .patheffects_path import (
+    Partial,
+    Open,
+    FillOnly,
+    StrokeOnly,
+    ClipPathFromPatch,
+    ClipPathSelf,
+)
 from .patheffects_transform import Offset
 from .patheffects_image_box import FillImage, AlphaGradient
+
 # from .pe_cyberfunk import GlowStroke as Glow
 from .patheffects_glow import Glow, CmapGlow
 from .patheffects_image_effect import ImageEffect
 
-class GCModify(ChainablePathEffect):
 
+class GCModify(ChainablePathEffect):
     def __init__(self, **kwargs):
         """
         The path will be stroked with its gc updated with the given

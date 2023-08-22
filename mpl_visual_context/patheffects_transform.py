@@ -12,6 +12,7 @@ class Offset(ChainablePathEffect):
 
     def _convert(self, renderer, gc, tpath, affine, rgbFace):
         offset = mtransforms.Affine2D().translate(
-            *map(renderer.points_to_pixels, [self._ox, self._oy]))
+            *map(renderer.points_to_pixels, [self._ox, self._oy])
+        )
 
         return renderer, gc, tpath, affine + offset, rgbFace

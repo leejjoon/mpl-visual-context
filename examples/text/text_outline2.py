@@ -27,23 +27,23 @@ t = ax.text(
 
 from mpl_visual_context.patheffects import ClipPathFromPatch
 
-def get_pe(cmap=cm.viridis, nstep=10, max_lw=45, c0=0, c1=1,
-           clippath=None,
-           linecolor="black"):
+
+def get_pe(
+    cmap=cm.viridis, nstep=10, max_lw=45, c0=0, c1=1, clippath=None, linecolor="black"
+):
     pe = []
-    for x, c in zip(np.linspace(1, 0, nstep),
-                    np.linspace(c0, c1, nstep)):
+    for x, c in zip(np.linspace(1, 0, nstep), np.linspace(c0, c1, nstep)):
         lw, color = x * max_lw, cmap(c)
-        pe.append(ClipPathFromPatch(clippath)
-                  | Stroke(linewidth=lw + 1, foreground=linecolor))
-        pe.append(ClipPathFromPatch(clippath)
-                  | Stroke(linewidth=lw, foreground=color))
+        pe.append(
+            ClipPathFromPatch(clippath) | Stroke(linewidth=lw + 1, foreground=linecolor)
+        )
+        pe.append(ClipPathFromPatch(clippath) | Stroke(linewidth=lw, foreground=color))
 
     return pe
 
+
 # bp = t.get_bbox_patch()
 bp = None
-t.set_path_effects(get_pe(c0=0.8, max_lw=80, nstep=5,
-                          linecolor="k", clippath=bp))
+t.set_path_effects(get_pe(c0=0.8, max_lw=80, nstep=5, linecolor="k", clippath=bp))
 
 plt.show()
