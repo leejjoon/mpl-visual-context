@@ -77,3 +77,91 @@ def image_get_window_extent(im, renderer=None):
     return bbox.transformed(im.get_transform())
 
 
+from numbers import Real
+from mpl_toolkits.axes_grid1.axes_size import Fixed, Fraction, _Base
+def from_any(size, fraction_ref=None):
+    """
+    Create a Fixed unit when the first argument is a float, or a
+    Fraction unit if that is a string that ends with %. The second
+    argument is only meaningful when Fraction unit is created.
+
+    >>> a = Size.from_any(1.2) # => Size.Fixed(1.2)
+    >>> Size.from_any("50%", a) # => Size.Fraction(0.5, a)
+    """
+    if isinstance(size, Real):
+        return Fixed(size)
+    elif isinstance(size, str):
+        if size[-1] == "%":
+            return Fraction(float(size[:-1]) / 100, fraction_ref)
+    elif isinstance(size, _Base):
+        return size
+
+    raise ValueError("Unknown format")
+
+def fix_axes_size():
+    import mpl_toolkits.axes_grid1.axes_size
+
+    mpl_toolkits.axes_grid1.axes_size.from_any = from_any
+
+
+def _get_anchored_bbox(loc, bbox, parentbbox, borderpad):
+    """
+    Return the (x, y) position of the *bbox* anchored at the *parentbbox* with
+    the *loc* code with the *borderpad*.
+    """
+    # This is only called internally and *loc* should already have been
+    # validated.  If 0 (None), we just let ``bbox.anchored`` raise.
+    c = [None, "NE", "NW", "SW", "SE", "E", "W", "E", "S", "N", "C"][loc]
+    from collections.abc import Sequence
+    if isinstance(borderpad, Sequence):
+        container = parentbbox.padded(-borderpad[0], -borderpad[1])
+    else:
+        container = parentbbox.padded(-borderpad)
+    return bbox.anchored(c, container=container).p0
+
+from matplotlib.offsetbox import Bbox, _compat_get_offset
+from matplotlib.offsetbox import AnchoredOffsetbox as _AnchoredOffsetbox
+
+class AnchoredOffsetbox(_AnchoredOffsetbox):
+    @_compat_get_offset
+    def get_offset(self, bbox, renderer):
+        # docstring inherited
+        from collections.abc import Sequence
+        s = renderer.points_to_pixels(self.prop.get_size_in_points())
+        if isinstance(self.borderpad, Sequence):
+            padx = self.borderpad[0] * s
+            pady = self.borderpad[1] * s
+        else:
+            padx = pady = self.borderpad * s
+
+        bbox_to_anchor = self.get_bbox_to_anchor()
+        # x0, y0 = _get_anchored_bbox(
+        #     self.loc, Bbox.from_bounds(0, 0, bbox.width, bbox.height),
+        #     bbox_to_anchor, (padx, pady))
+        x0, y0 = _get_anchored_bbox(
+            self.loc, Bbox.from_bounds(0, 0, bbox.width, bbox.height),
+            bbox_to_anchor, (padx, pady))
+        return x0 - bbox.x0, y0 - bbox.y0
+
+import matplotlib.offsetbox
+matplotlib.offsetbox.AnchoredOffsetbox.get_offset = AnchoredOffsetbox.get_offset
+
+import matplotlib.transforms as mtransforms
+class BboxBase(mtransforms.BboxBase):
+    def padded(self, w_pad, h_pad=None):
+        """
+        Construct a `Bbox` by padding this one on all four sides.
+
+        Parameters
+        ----------
+        w_pad : float
+            Width pad
+        h_pad : float, optional
+            Height pad.  Defaults to *w_pad*.
+
+        """
+        points = self.get_points()
+        if h_pad is None:
+            h_pad = w_pad
+        return Bbox(points + [[-w_pad, -h_pad], [w_pad, h_pad]])
+mtransforms.BboxBase.padded = BboxBase.padded

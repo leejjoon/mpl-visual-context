@@ -9,6 +9,12 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 from mpl_visual_context.axes_helper import get_axislines
 
+from matplotlib.offsetbox import AnchoredOffsetbox
+from matplotlib.offsetbox import TextArea
+
+from .mpl_fix import fix_axes_size
+fix_axes_size()
+
 
 class PanelAxes_(Axes):
     def __init__(self, *kl, **kwargs):
@@ -54,24 +60,23 @@ class PanelAxes_(Axes):
         for a in self.annotations:
             a.xyann = offset
 
-    def anchor(self, text_or_offsetbox, loc, pad=0, borderpad=0.5,
-               frameon=False, **kwargs):
+    def anchor(
+        self, text_or_offsetbox, loc, pad=0, borderpad=0.5, frameon=False, **kwargs
+    ):
         """
 
         pad : padding around the offsetbox created.
         borderpad : padding between the offset box and the axes.
         """
-        from matplotlib.offsetbox import (AnchoredOffsetbox,
-                                          TextArea)
 
         if isinstance(text_or_offsetbox, str):
             ob = TextArea(text_or_offsetbox, textprops=kwargs)
         else:
             ob = text_or_offsetbox
 
-        box = AnchoredOffsetbox(loc, child=ob,
-                                pad=pad, borderpad=borderpad,
-                                frameon=frameon)
+        box = AnchoredOffsetbox(
+            loc, child=ob, pad=pad, borderpad=borderpad, frameon=frameon
+        )
         self.add_artist(box)
         self.add_annotation(box)
 
