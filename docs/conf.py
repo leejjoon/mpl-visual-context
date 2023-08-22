@@ -46,7 +46,9 @@ sphinx_gallery_conf = {
     "examples_dirs": "../examples",  # path to your example scripts
     'subsection_order': ExplicitOrder(['../examples/path_effects',
                                        '../examples/image-box',
-                                       '../examples/image_effect']),
+                                       '../examples/image_effect',
+                                       '../examples/panel',
+                                       '../examples/spread']),
     "gallery_dirs": "examples",  # path to where to save gallery generated output
     "filename_pattern": "/.*",
     "ignore_pattern": "/_.*",  # https://www.debuggex.com/
