@@ -1,10 +1,10 @@
+from abc import ABC, abstractmethod
+
 import numpy as np
 from matplotlib.patheffects import AbstractPathEffect, Normal
 from matplotlib import cbook
 # from .patheffects import StrokeOnly, GCModify
 import scipy.ndimage as NI
-
-from abc import abstractmethod
 
 # class ChainableImageEffect:
 
@@ -41,7 +41,7 @@ from abc import abstractmethod
 #                 img = np.asarray(img * 255., np.uint8)
 #             renderer.draw_image(gc, x/scale_factor, y/scale_factor, img)
 
-class ImageEffectBase:
+class ImageEffectBase(ABC):
     @abstractmethod
     def process_image(self, dpi, scale_factor, x, y, img):
         ...
@@ -148,20 +148,49 @@ class Erosion(ChainableImageEffect):
 
 from matplotlib.colors import LightSource as _LightSource
 
-class LightSource(ChainableImageEffect):
-    def __init__(self, erosion_size=3, gaussian_size=3, fraction=1,
+class LightSourceBase(ChainableImageEffect):
+    def __init__(self, fraction=1, vert_exag=1,
                  blend_mode="overlay",
                  azdeg=315, altdeg=45):
-        "ox, oy in points (72 dpi)"
         super().__init__()
         self.light_source = _LightSource(azdeg=azdeg, altdeg=altdeg)
-        self.erosion_size = erosion_size
-        self.gaussian_size = gaussian_size
         self.fraction = fraction
         self.blend_mode = blend_mode
+        self.vert_exag = vert_exag
+
+    @abstractmethod
+    def get_elev(self, dpi, scale_factor, x, y, img):
+        ...
 
     def process_image(self, dpi, scale_factor, x, y, img):
 
+        elev = self.get_elev(dpi, scale_factor, x, y, img)
+
+        # FIXME for some colors,eg, red, blue, overlay and soft does not
+        # introduce shades. To prevent this, we simply clip the rgb values
+        # between 0.2 and 0.8
+        rgb = np.clip(img[:, :, :-1], 0.2, 0.8)
+        rgb2 = self.light_source.shade_rgb(rgb, elev,
+                                           fraction=self.fraction,
+                                           vert_exag=self.vert_exag,
+                                           blend_mode=self.blend_mode)
+        out = np.concatenate([rgb2, img[:,:,3:]], -1)
+        return dpi, scale_factor, x, y, out
+
+
+class LightSource(LightSourceBase):
+    def __init__(self, erosion_size=3, gaussian_size=3,
+                 fraction=1, vert_exag=1,
+                 blend_mode="overlay",
+                 azdeg=315, altdeg=45):
+        super().__init__(fraction=fraction, vert_exag=vert_exag,
+                         blend_mode=blend_mode,
+                         azdeg=azdeg, altdeg=altdeg)
+
+        self.erosion_size = erosion_size
+        self.gaussian_size = gaussian_size
+
+    def get_elev(self, dpi, scale_factor, x, y, img):
         elev = img[:, :, -1]
         # msk = elev > 0.5
         # img[~msk,:-1] = 0
@@ -172,19 +201,38 @@ class LightSource(ChainableImageEffect):
         size = int(self.gaussian_size * scale_factor)
         elev = NI.gaussian_filter(elev, [size, size])
 
-        # FIXME for some colors,eg, red, blue, overlay and soft does not
-        # introduce shades. To prevent this, we simply clip the rgb values
-        # between 0.2 and 0.8
-        rgb = np.clip(img[:, :, :-1], 0.2, 0.8)
-        rgb2 = self.light_source.shade_rgb(rgb, elev,
-                                           fraction=self.fraction,
-                                           blend_mode=self.blend_mode)
-        out = np.concatenate([rgb2, img[:,:,3:]], -1)
-        return dpi, scale_factor, x, y, out
+        return elev
 
-# vv = _LightSource().hillshade(elev)
+    # def process_image(self, dpi, scale_factor, x, y, img):
+    #     return super().process_image(dpi, scale_factor, x, y, img)
 
-# kk = _LightSource().shade_rgb(rgb, elev, blend_mode="hsv")
+
+class LightSourceSharp(LightSourceBase):
+    def __init__(self, dist_max=None, dist_min=0, fraction=1,
+                 blend_mode="overlay", vert_exag=1,
+                 azdeg=315, altdeg=45):
+        super().__init__(fraction=fraction, vert_exag=vert_exag,
+                         blend_mode=blend_mode,
+                         azdeg=azdeg, altdeg=altdeg)
+
+        self.dist_max = dist_max
+        self.dist_min = dist_min
+
+    def get_elev(self, dpi, scale_factor, x, y, img):
+        elev = img[:, :, -1]
+
+        elev = NI.distance_transform_edt(elev)
+        if self.dist_max is not None:
+            size = int(self.dist_max * scale_factor)
+        else:
+            size = np.inf
+        elev = np.clip(elev, int(self.dist_min * scale_factor), size)
+
+        return elev
+
+    # def process_image(self, dpi, scale_factor, x, y, img):
+    #     return super().process_image(dpi, scale_factor, x, y, img)
+
 
 class Gaussian(ChainableImageEffect):
     def __init__(self, sigma):
