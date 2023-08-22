@@ -14,4 +14,3 @@ function to extend matplotlib functionality.
    :nosignatures:
    :recursive:
 
-   example_function
