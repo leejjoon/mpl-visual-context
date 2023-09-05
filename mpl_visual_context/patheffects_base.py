@@ -18,7 +18,8 @@ class ChainablePathEffect(AbstractPathEffect):
         renderer, gc, tpath, affine, rgbFace = self._convert(
             renderer, gc, tpath, affine, rgbFace
         )
-        renderer.draw_path(gc, tpath, affine, rgbFace)
+        if renderer is not None:
+            renderer.draw_path(gc, tpath, affine, rgbFace)
 
 
 class ChainedPathEffect(ChainablePathEffect):
