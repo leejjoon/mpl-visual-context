@@ -1,19 +1,14 @@
 # mpl-visual-context
 
-A 3rd party package for Matplotlib
+A collection of tools that provide more visual context to your Matplotlib plots.
+
+<img src="https://mpl-visual-context.readthedocs.io/en/latest/_images/mpl-visual-context-demo.png">
+
 
 ## Installation
 
-You can install using `pip`:
 
-```bash
+```console
 pip install mpl_visual_context
-```
-
-## Development Installation
-
-
-```bash
-pip install -e ".[dev]"
 ```
 
