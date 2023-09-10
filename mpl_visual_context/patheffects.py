@@ -22,6 +22,8 @@ from .patheffects_path import (
     ClipPathFromPatch,
     ClipPathSelf,
     ClipRect,
+    Smooth,
+    SmoothClosed,
 )
 from .patheffects_transform import Offset
 from .patheffects_image_box import FillImage, AlphaGradient

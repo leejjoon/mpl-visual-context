@@ -1,3 +1,4 @@
+import numpy as np
 from matplotlib.path import Path
 import matplotlib.transforms as mtransforms
 from matplotlib.transforms import Bbox
@@ -129,3 +130,136 @@ class ClipRect(ChainablePathEffect):
 
         return renderer, gc0, tpath, affine, rgbFace
 
+
+# original code from
+# https://www.particleincell.com/wp-content/uploads/2012/06/bezier-spline.js
+
+def _computeControlPoints(K):
+    nn = len(K)
+    n = nn - 1
+
+    p1 = np.zeros(n)
+    p2 = np.zeros(n)
+
+    a = np.zeros(n)
+    b = np.zeros(n)
+    c = np.zeros(n)
+    r = np.zeros(n)
+
+    a[0] = 0
+    b[0] = 2
+    c[0] = 1
+    r[0] = K[0] + 2*K[1]
+
+    for i in range(1, n-1):
+        a[i]=1
+        b[i]=4
+        c[i]=1
+        r[i] = 4 * K[i] + 2 * K[i+1]
+
+    a[n-1] = 2
+    b[n-1] = 7
+    c[n-1] = 0
+    r[n-1] = 8*K[n-1] + K[n]
+
+    # /*solves Ax=b with the Thomas algorithm (from Wikipedia)*/
+    for i in range(1, n):
+        m = a[i] / b[i-1]
+        b[i] = b[i] - m * c[i-1]
+        r[i] = r[i] - m * r[i-1]
+
+    p1[n-1] = r[n-1]/b[n-1]
+
+    for i in range(n-2, -1, -1):
+        p1[i] = (r[i] - c[i] * p1[i+1]) / b[i]
+
+    # /*we have p1, now compute p2*/
+    for i in range(0, n-1):
+        p2[i] = 2*K[i+1] - p1[i+1]
+
+    p2[n-1] = 0.5*(K[n] + p1[n-1])
+
+    return p1, p2
+
+
+class Smooth(ChainablePathEffect):
+    def __init__(self, skip_incompatible=False):
+        super().__init__()
+        self._skip_incompatible = skip_incompatible
+
+    def _make_smooth_path(self, vertices, start_code=Path.MOVETO):
+        n = len(vertices)
+
+        x = vertices[:, 0]
+        y = vertices[:, 1]
+        xp1, xp2 = _computeControlPoints(x)
+        yp1, yp2 = _computeControlPoints(y)
+
+        xy = np.empty(shape=(n*3-2, 2), dtype=float)
+
+        xy[::3] = vertices
+
+        xy[1::3, 0] = xp1
+        xy[2::3, 0] = xp2
+
+        xy[1::3, 1] = yp1
+        xy[2::3, 1] = yp2
+
+        codes = np.empty(len(xy), dtype="uint8")
+        codes.fill(Path.CURVE4)
+        codes[0] = start_code
+
+        return xy, codes
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        codes, vertices = tpath.codes, tpath.vertices
+
+        if codes is not None and (codes[0] != Path.MOVETO or
+                                  np.any(codes[1:] != Path.LINETO)):
+            if self._skip_incompatible:
+                renderer = None
+
+            return renderer, gc, tpath, affine, rgbFace
+
+        xy, codes = self._make_smooth_path(vertices)
+        new_tpath = Path(vertices=xy, codes=codes)
+
+        return renderer, gc, new_tpath, affine, rgbFace
+
+
+class SmoothClosed(Smooth):
+    """
+    This is for a closed path such as returned by fill_between
+    """
+    def __init__(self, skip_incompatible=False, skip_first_n=1):
+        super().__init__(skip_incompatible=skip_incompatible)
+
+        # somehow, the 1st point seems to be repeated and smoothing seems not
+        # right unless the points is skipped.
+        self._skip_first_n = skip_first_n
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        codes, vertices = tpath.codes, tpath.vertices
+
+        if codes is not None and (codes[0] != Path.MOVETO or
+                                  np.any(codes[1:-1] != Path.LINETO) or
+                                  codes[-1] != Path.CLOSEPOLY):
+            if self._skip_incompatible:
+                renderer = None
+
+            return renderer, gc, tpath, affine, rgbFace
+
+        n = len(vertices) // 2
+        u = self._skip_first_n
+
+        v1, c1 = self._make_smooth_path(vertices[u:n],
+                                        start_code=Path.MOVETO)
+        v2, c2 = self._make_smooth_path(vertices[n+u:2*n],
+                                        start_code=Path.LINETO)
+
+        vv = np.vstack([v1, v2, v1[:1]])
+        cc = np.hstack([c1, c2, [Path.CLOSEPOLY]])
+
+        new_tpath = Path(vertices=vv, codes=cc)
+
+        return renderer, gc, new_tpath, affine, rgbFace

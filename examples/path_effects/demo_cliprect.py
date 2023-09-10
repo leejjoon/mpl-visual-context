@@ -1,4 +1,4 @@
-# base onf stacked-plots.py from Scientific Visualisation by N. P. Rougier
+# base on stacked-plots.py from Scientific Visualisation by N. P. Rougier
 
 import itertools
 import numpy as np
