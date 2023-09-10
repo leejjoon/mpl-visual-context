@@ -1,6 +1,8 @@
 from matplotlib.path import Path
 import matplotlib.transforms as mtransforms
+from matplotlib.transforms import Bbox
 from .patheffects_base import ChainablePathEffect
+from .image_box import TR
 
 
 class Partial(ChainablePathEffect):
@@ -92,3 +94,38 @@ class ClipPathSelf(ChainablePathEffect):
         gc0.set_clip_path(pp)
 
         return renderer, gc0, tpath, affine, rgbFace
+
+
+class ClipRect(ChainablePathEffect):
+    def __init__(self, ax, left=None, bottom=None, right=None, top=None,
+                 coords="data"):
+        super().__init__()
+        self.ax = ax
+        self.left= left
+        self.bottom = bottom
+        self.right = right
+        self.top = top
+
+        self.coords = coords
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace):
+        gc0 = renderer.new_gc()  # Don't modify gc, but a copy!
+        gc0.copy_properties(gc)
+
+        cliprect = gc0.get_clip_rectangle()
+
+        left, bottom, right, top = cliprect.extents
+
+        tr = TR.get_xy_transform(renderer, self.coords, axes=self.ax)
+
+        left = left if self.left is None else tr.transform_point([self.left, 0])[0]
+        right = right if self.right is None else tr.transform_point([self.right, 0])[0]
+
+        bottom = bottom if self.bottom is None else tr.transform_point([0, self.bottom])[1]
+        top = top if self.top is None else tr.transform_point([0, self.top])[1]
+
+        cliprect0 = Bbox.from_extents(left, bottom, right, top)
+        gc0.set_clip_rectangle(cliprect0)
+
+        return renderer, gc0, tpath, affine, rgbFace
+
