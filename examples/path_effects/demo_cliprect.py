@@ -1,3 +1,10 @@
+"""
+====================
+ClipRect demo
+====================
+
+Adopted from seaborn's timeseries_facets example
+"""
 # base on stacked-plots.py from Scientific Visualisation by N. P. Rougier
 
 import itertools

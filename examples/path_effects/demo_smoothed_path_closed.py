@@ -1,3 +1,11 @@
+"""
+====================
+Smooth demo, w/ closed path
+====================
+
+Adopted from seaborn's errorband_lineplots example
+"""
+
 import numpy as np
 import numpy as np
 from scipy.interpolate import make_interp_spline
