@@ -258,6 +258,7 @@ class ClipPathSelf(ChainablePathEffect):
     def _convert(self, renderer, gc, tpath, affine, rgbFace):
         gc0 = renderer.new_gc()  # Don't modify gc, but a copy!
         gc0.copy_properties(gc)
+        # FIXME this may not work if dpi change w/ ImageEffect.
         pp = mtransforms.TransformedPath(tpath, affine)
         gc0.set_clip_path(pp)
 
@@ -304,5 +305,6 @@ class ClipRect(ChainablePathEffect):
 
         cliprect0 = Bbox.from_extents(left, bottom, right, top)
         gc0.set_clip_rectangle(cliprect0)
+        # FIXME this may not work if dpi change w/ ImageEffect.
 
         return renderer, gc0, tpath, affine, rgbFace

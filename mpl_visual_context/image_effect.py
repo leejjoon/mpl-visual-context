@@ -1,46 +1,10 @@
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 
 import numpy as np
-from matplotlib.patheffects import AbstractPathEffect, Normal
-from matplotlib import cbook
-
-# from .patheffects import StrokeOnly, GCModify
 import scipy.ndimage as NI
 
-# class ChainableImageEffect:
-
-#     # @abstractmethod
-#     def process_image(self, dpi, scale_factor,
-#                        x, y, img):
-#         return dpi, scale_factor, x, y, img
-
-
-# class ImageEffectStart(AbstractPathEffect):
-#     def __init__(self, start, ie_list):
-#         self.start = start
-#         self._ie_list = ie_list
-
-#     @abstractmethod
-#     def get_image(self, renderer, gc, tpath, affine, rgbFace):
-#         ...
-
-#     def __or__(self, other):
-#         if isinstance(other, ChainableImageEffect):
-#             return ChainedImageEffect(self, other)
-#         else:
-#             raise ValueError()
-
-#     def draw_path(self, renderer, gc, tpath, affine, rgbFace):
-
-#         agg_dpi, scale_factor, x, y, img = \
-#             self.get_image(renderer, gc, tpath, affine, rgbFace)
-
-#         if img.size:
-#             ox, oy = 0, 0
-#             # gc = renderer.new_gc()
-#             if img.dtype.kind == 'f':
-#                 img = np.asarray(img * 255., np.uint8)
-#             renderer.draw_image(gc, x/scale_factor, y/scale_factor, img)
+import matplotlib.colors as mcolors
 
 
 class ImageEffectBase(ABC):
@@ -71,6 +35,7 @@ class ChainedImageEffect(ChainableImageEffect):
 
 
 class Offset(ChainableImageEffect):
+    """translate the image by the given offset"""
     def __init__(self, ox, oy):
         "ox, oy in points (72 dpi)"
         super().__init__()
@@ -87,10 +52,8 @@ class Offset(ChainableImageEffect):
         )
 
 
-import matplotlib.colors as mcolors
-
-
 class Fill(ChainableImageEffect):
+    """fill the rgb chanell with given color. alpha channel is not affected"""
     def __init__(self, c):
         "ox, oy in points (72 dpi)"
         super().__init__()
@@ -102,7 +65,27 @@ class Fill(ChainableImageEffect):
         return dpi, scale_factor, x, y, img
 
 
+class AlphaAxb(ChainableImageEffect):
+    """Modify the alpha channel by element-wise operation of 'a * c + b' where
+    a, b is given and c is a alpha value from the image."""
+    def __init__(self, alpha_ab):
+        "ox, oy in points (72 dpi)"
+        super().__init__()
+        self.alpha_ab = alpha_ab
+
+    def get_pad(self):
+        return 0
+
+    def process_image(self, dpi, scale_factor, x, y, img):
+        img2 = img.copy()
+        a, b = self.alpha_ab
+        img2[:, :, 3] = a * img2[:, :, 3] + b
+
+        return dpi, scale_factor, x, y, img2
+
+
 class Pad(ChainableImageEffect):
+    """pad the image by given numberof pixels."""
     def __init__(self, pad, pady=None, *, rgb_fill=1.0, alpha_fill=0.0):
         "ox, oy in points (72 dpi)"
         super().__init__()
@@ -134,41 +117,73 @@ class Pad(ChainableImageEffect):
         return dpi, scale_factor, x - pads[0], y - pads[1], tgt_image
 
 
-class Dilation(ChainableImageEffect):
-    def __init__(self, size):
+class ImageConvBase(ChainableImageEffect):
+    def __init__(self, size, channel_slice=slice(3, None)):
         "ox, oy in points (72 dpi)"
         super().__init__()
         self.size = size
+        self.channel_slice = channel_slice
+
+    def _get_scaled_size(self, size, scale_factor):
+        if isinstance(size, Sequence):
+            size0 = int(size[0] * scale_factor)
+            size1 = int(size[1] * scale_factor)
+            size = (size0, size1, size[2])
+        else:
+            size = int(size * scale_factor)
+            size = (size, size, 0)
+
+        return size
+
+    def _process_image(self, img, size):
+        return NI.grey_dilation(img, size)
 
     def process_image(self, dpi, scale_factor, x, y, img):
-        size = int(self.size * scale_factor)
-        img = NI.grey_dilation(img, size=[size, size, 1])
+
+        size = self._get_scaled_size(self.size, scale_factor)
+        cs = self.channel_slice
+        img[..., cs] = self._process_image(img[..., cs], size=size)
 
         return dpi, scale_factor, x, y, img
 
 
-class Erosion(ChainableImageEffect):
-    def __init__(self, size):
-        "ox, oy in points (72 dpi)"
-        super().__init__()
-        self.size = size
-
-    def process_image(self, dpi, scale_factor, x, y, img):
-        size = int(self.size * scale_factor)
-        img = NI.grey_erosion(img, size=[size, size, 1])
-
-        return dpi, scale_factor, x, y, img
+class Dilation(ImageConvBase):
+    """grey dilation of the image """
+    def _process_image(self, img, size):
+        return NI.grey_dilation(img, size)
 
 
-from matplotlib.colors import LightSource as _LightSource
+class Erosion(ImageConvBase):
+    """grey erosion of the image """
+    def _process_image(self, img, size):
+        return NI.grey_erosion(img, size)
 
+
+class Gaussian(ImageConvBase):
+    """gaussian smoothed image """
+
+    def _get_scaled_size(self, size, scale_factor):
+        if isinstance(size, Sequence):
+            size0 = size[0] * scale_factor
+            size1 = size[1] * scale_factor
+            size = (size0, size1, size[2])
+        else:
+            size = size * scale_factor
+            size = (size, size, 0)
+
+        return size
+
+    def _process_image(self, img, size):
+        return NI.gaussian_filter(img, size)
+
+GaussianBlur = Gaussian
 
 class LightSourceBase(ChainableImageEffect):
     def __init__(
         self, fraction=1, vert_exag=1, blend_mode="overlay", azdeg=315, altdeg=45
     ):
         super().__init__()
-        self.light_source = _LightSource(azdeg=azdeg, altdeg=altdeg)
+        self.light_source = mcolors.LightSource(azdeg=azdeg, altdeg=altdeg)
         self.fraction = fraction
         self.blend_mode = blend_mode
         self.vert_exag = vert_exag
@@ -197,6 +212,8 @@ class LightSourceBase(ChainableImageEffect):
 
 
 class LightSource(LightSourceBase):
+    """apply lightsource effect to the image using its alpha channel (gaussian
+    smoothed) as elevation"""
     def __init__(
         self,
         erosion_size=3,
@@ -220,8 +237,6 @@ class LightSource(LightSourceBase):
 
     def get_elev(self, dpi, scale_factor, x, y, img):
         elev = img[:, :, -1]
-        # msk = elev > 0.5
-        # img[~msk,:-1] = 0
 
         size = int(self.erosion_size * scale_factor)
         elev = NI.grey_erosion(elev, size=[size, size])
@@ -231,11 +246,10 @@ class LightSource(LightSourceBase):
 
         return elev
 
-    # def process_image(self, dpi, scale_factor, x, y, img):
-    #     return super().process_image(dpi, scale_factor, x, y, img)
-
 
 class LightSourceSharp(LightSourceBase):
+    """apply lightsource effect to the image. The elevation is calculated by
+    the distance transform of the alpha channel."""
     def __init__(
         self,
         dist_max=None,
@@ -269,46 +283,4 @@ class LightSourceSharp(LightSourceBase):
 
         return elev
 
-    # def process_image(self, dpi, scale_factor, x, y, img):
-    #     return super().process_image(dpi, scale_factor, x, y, img)
 
-
-class Gaussian(ChainableImageEffect):
-    def __init__(self, sigma):
-        "ox, oy in points (72 dpi)"
-        super().__init__()
-        self.sigma = sigma
-
-    # def get_pad(self):
-    #     return self.sigma*3
-
-    def process_image(self, dpi, scale_factor, x, y, img):
-        # pad = int(self.get_pad()*scale_factor)
-        # img_rgb = np.pad(img[:, :, :3], [(pad, pad), (pad, pad), (0, 0)],
-        #                  "constant",
-        #                  constant_values=1.)
-        # img_alpha = np.pad(img[:, :, 3], [(pad, pad), (pad, pad)],
-        #                    "constant",
-        #                    constant_values=0.)
-        # img = np.concatenate([img_rgb, img_alpha[:, :, np.newaxis]], axis=-1)
-        s = self.sigma * scale_factor
-        tgt_image = NI.gaussian_filter(img, [s, s, 0])
-
-        return dpi, scale_factor, x, y, tgt_image
-
-
-class AlphaAxb(ChainableImageEffect):
-    def __init__(self, alpha_ab):
-        "ox, oy in points (72 dpi)"
-        super().__init__()
-        self.alpha_ab = alpha_ab
-
-    def get_pad(self):
-        return 0
-
-    def process_image(self, dpi, scale_factor, x, y, img):
-        img2 = img.copy()
-        a, b = self.alpha_ab
-        img2[:, :, 3] = a * img2[:, :, 3] + b
-
-        return dpi, scale_factor, x, y, img2
