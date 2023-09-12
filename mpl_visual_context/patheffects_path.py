@@ -227,7 +227,7 @@ class Smooth(ChainablePathEffect):
         return renderer, gc, new_tpath, affine, rgbFace
 
 
-class SmoothClosed(Smooth):
+class SmoothFillBetween(Smooth):
     """
     This is for a closed path such as returned by fill_between
     """
