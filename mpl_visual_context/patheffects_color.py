@@ -1,3 +1,7 @@
+"""
+Defines classes for path effects that modifies color.
+"""
+
 from abc import abstractmethod
 import numpy as np
 import matplotlib.colors as mcolors
@@ -9,6 +13,12 @@ from .patheffects_base import ChainablePathEffect
 
 
 class ColorModifyStroke(ChainablePathEffect):
+    """
+    A base class for path effects that modifies color.
+
+    Subclasses should override the ``apply_to_color_path`` method that returns a new color.
+    """
+
     @abstractmethod
     def apply_to_color(self, c):
         pass
@@ -29,14 +39,14 @@ class ColorModifyStroke(ChainablePathEffect):
 
 
 class HLSaxb(ColorModifyStroke):
+    """
+    PathEffect which modifies the color in HLS space. Given
+    a tuple of (a, b), the new color is defiend as h' = a * h + b, and so on.
+    Both stroke and fill color are changed.
+    """
     def __init__(
         self, h_ab=(1, 0), l_ab=(1, 0), s_ab=(1, 0), alpha_ab=(1, 0), clip_mode="clip"
     ):
-        """
-        The path will be stroked with its gc updated with the given
-        keyword arguments, i.e., the keyword arguments should be valid
-        gc parameter values.
-        """
         super().__init__()
         self._modifier = HLSModify_axb(h_ab, l_ab, s_ab, alpha_ab, clip_mode=clip_mode)
 
@@ -48,7 +58,10 @@ class HLSaxb(ColorModifyStroke):
 
 
 class HLSModify(HLSaxb):
-    """A line based PathEffect which re-draws a stroke."""
+    """
+    PathEffect which modifies the color in HLS space.
+    Both stroke and fill color are changed.
+    """
 
     def __init__(
         self,
@@ -71,6 +84,12 @@ class HLSModify(HLSaxb):
 
 
 class ColorMatrix(ColorModifyStroke):
+    """
+    PathEffect which modifies the color in RGB space, using a predefined
+    color matrix. Supported matrix are 'grayscale', 'sepia', 'nightvision',
+    'warm' and 'cool.
+    Both stroke and fill color are changed.
+    """
     color_matrix = CM._get_matrix()
 
     def __init__(self, kind):
@@ -92,6 +111,7 @@ class ColorMatrix(ColorModifyStroke):
 
 
 class FillColor(ChainablePathEffect):
+    """PathEffect to set the fill color"""
     def __init__(self, fillcolor):
         self._fillcolor = mcolors.to_rgba(fillcolor) if fillcolor else None
 
@@ -101,6 +121,7 @@ class FillColor(ChainablePathEffect):
 
 
 class StrokeColor(ChainablePathEffect):
+    """PathEffect to set the stoke color"""
     def __init__(self, c):
         super().__init__()
         self._stroke_color = c
@@ -115,6 +136,7 @@ class StrokeColor(ChainablePathEffect):
 
 
 class StrokeColorFromFillColor(ChainablePathEffect):
+    """PathEffect to set the stoke color by the fill color"""
     def __init__(self):
         super().__init__()
 
@@ -127,6 +149,7 @@ class StrokeColorFromFillColor(ChainablePathEffect):
 
 
 class FillColorFromStrokeColor(ChainablePathEffect):
+    """PathEffect to set the fill color by the stroke color"""
     def __init__(self):
         super().__init__()
 

@@ -1,3 +1,6 @@
+"""
+Defines classes for path effects that modifies the path and/or fill behavior.
+"""
 import numpy as np
 from matplotlib.path import Path
 import matplotlib.transforms as mtransforms
@@ -6,8 +9,37 @@ from .patheffects_base import ChainablePathEffect
 from .image_box import TR
 
 
+class StrokeOnly(ChainablePathEffect):
+    """
+    PathEffect with only stroke. This is done by setting the fill color
+    to None.
+    """
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+
+        return renderer, gc, tpath, affine, None
+
+
+class FillOnly(ChainablePathEffect):
+    """
+    PathEffect with only fill. This is done by setting the linewidth to 0.
+    """
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        gc0 = renderer.new_gc()
+        gc0.copy_properties(gc)
+        gc0.set_linewidth(0)
+
+        return renderer, gc0, tpath, affine, rgbFace
+
+
 class Partial(ChainablePathEffect):
+    """
+    PathEffect with that preserve only a part of the path. It only support
+    lines (no bezier splines).
+    """
     def __init__(self, start, stop):
+        """
+        start, stop : index (if int) or fraction (if float)
+       """
         super().__init__()
         self._start = start
         self._stop = stop
@@ -30,6 +62,11 @@ class Partial(ChainablePathEffect):
 
 
 class Open(ChainablePathEffect):
+    """
+    PathEffect with no closed with. This is done by replacin CLOSEPOLY
+    code to STOP.
+    """
+
     def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
         codes, vertices = tpath.codes, tpath.vertices
 
@@ -38,97 +75,6 @@ class Open(ChainablePathEffect):
         new_tpath = Path._fast_from_codes_and_verts(vertices, codes)
 
         return renderer, gc, new_tpath, affine, rgbFace
-
-
-class StrokeOnly(ChainablePathEffect):
-    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
-
-        return renderer, gc, tpath, affine, None
-
-
-class FillOnly(ChainablePathEffect):
-    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
-        gc0 = renderer.new_gc()
-        gc0.copy_properties(gc)
-        gc0.set_linewidth(0)
-
-        return renderer, gc0, tpath, affine, rgbFace
-
-
-class ClipPathFromPatch(ChainablePathEffect):
-    def __init__(self, patch):
-        """
-        The path will be stroked with its gc updated with the given
-        keyword arguments, i.e., the keyword arguments should be valid
-        gc parameter values.
-        """
-        super().__init__()
-        self.patch = patch
-
-    def _convert(self, renderer, gc, tpath, affine, rgbFace):
-        if self.patch is not None:
-            gc0 = renderer.new_gc()  # Don't modify gc, but a copy!
-            gc0.copy_properties(gc)
-            pp = mtransforms.TransformedPath(
-                self.patch.get_path(), self.patch.get_transform()
-            )
-            gc0.set_clip_path(pp)
-        else:
-            gc0 = gc
-
-        return renderer, gc0, tpath, affine, rgbFace
-
-
-class ClipPathSelf(ChainablePathEffect):
-    def __init__(self):
-        """
-        The path will be stroked with its gc updated with the given
-        keyword arguments, i.e., the keyword arguments should be valid
-        gc parameter values.
-        """
-        super().__init__()
-
-    def _convert(self, renderer, gc, tpath, affine, rgbFace):
-        gc0 = renderer.new_gc()  # Don't modify gc, but a copy!
-        gc0.copy_properties(gc)
-        pp = mtransforms.TransformedPath(tpath, affine)
-        gc0.set_clip_path(pp)
-
-        return renderer, gc0, tpath, affine, rgbFace
-
-
-class ClipRect(ChainablePathEffect):
-    def __init__(self, ax, left=None, bottom=None, right=None, top=None,
-                 coords="data"):
-        super().__init__()
-        self.ax = ax
-        self.left= left
-        self.bottom = bottom
-        self.right = right
-        self.top = top
-
-        self.coords = coords
-
-    def _convert(self, renderer, gc, tpath, affine, rgbFace):
-        gc0 = renderer.new_gc()  # Don't modify gc, but a copy!
-        gc0.copy_properties(gc)
-
-        cliprect = gc0.get_clip_rectangle()
-
-        left, bottom, right, top = cliprect.extents
-
-        tr = TR.get_xy_transform(renderer, self.coords, axes=self.ax)
-
-        left = left if self.left is None else tr.transform_point([self.left, 0])[0]
-        right = right if self.right is None else tr.transform_point([self.right, 0])[0]
-
-        bottom = bottom if self.bottom is None else tr.transform_point([0, self.bottom])[1]
-        top = top if self.top is None else tr.transform_point([0, self.top])[1]
-
-        cliprect0 = Bbox.from_extents(left, bottom, right, top)
-        gc0.set_clip_rectangle(cliprect0)
-
-        return renderer, gc0, tpath, affine, rgbFace
 
 
 # original code from
@@ -183,7 +129,14 @@ def _computeControlPoints(K):
 
 
 class Smooth(ChainablePathEffect):
+    """
+    PathEffect that transform the given lines to smooth bezier path.
+    If the path is not line (not closed), the path is not changed.
+    """
     def __init__(self, skip_incompatible=False):
+        """
+        skip_incompatible : do not draw the path if incompatible. Default if False (the path is drawn as is)
+        """
         super().__init__()
         self._skip_incompatible = skip_incompatible
 
@@ -229,9 +182,16 @@ class Smooth(ChainablePathEffect):
 
 class SmoothFillBetween(Smooth):
     """
-    This is for a closed path such as returned by fill_between
+    PathEffect that transform a patch created by fill_between to a
+    smooth nezier path. It assumes that the patch is consist of two lines
+    (one for upper/left boundary another for lower/right boundary), which
+    are smoothed separately then combined.
     """
-    def __init__(self, skip_incompatible=False, skip_first_n=1):
+    def __init__(self, skip_incompatible=False, skip_first_n=0):
+        """
+        skip_incompatible : do not draw the path if incompatible. Default if False (the path is drawn as is)
+        skip_first_n : ignore fist n points in the path (for each upper and lower bounday).
+        """
         super().__init__(skip_incompatible=skip_incompatible)
 
         # somehow, the 1st point seems to be repeated and smoothing seems not
@@ -263,3 +223,86 @@ class SmoothFillBetween(Smooth):
         new_tpath = Path(vertices=vv, codes=cc)
 
         return renderer, gc, new_tpath, affine, rgbFace
+
+
+class ClipPathFromPatch(ChainablePathEffect):
+    """
+    PathEffect that clips the path using a provided patch.
+    """
+    def __init__(self, patch):
+        super().__init__()
+        self.patch = patch
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace):
+        if self.patch is not None:
+            gc0 = renderer.new_gc()  # Don't modify gc, but a copy!
+            gc0.copy_properties(gc)
+            pp = mtransforms.TransformedPath(
+                self.patch.get_path(), self.patch.get_transform()
+            )
+            gc0.set_clip_path(pp)
+        else:
+            gc0 = gc
+
+        return renderer, gc0, tpath, affine, rgbFace
+
+
+class ClipPathSelf(ChainablePathEffect):
+    """
+    PathEffect that sets the clip_path to the path itself. This is useful when
+    the path is modified down in the pipeline.
+    """
+    def __init__(self):
+        super().__init__()
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace):
+        gc0 = renderer.new_gc()  # Don't modify gc, but a copy!
+        gc0.copy_properties(gc)
+        pp = mtransforms.TransformedPath(tpath, affine)
+        gc0.set_clip_path(pp)
+
+        return renderer, gc0, tpath, affine, rgbFace
+
+
+class ClipRect(ChainablePathEffect):
+    """
+    PathEffect that modifies the clip_rect using the given coordinate
+    (and transform). In most case, the default clip_rect is the bbox of
+    the axes.
+    """
+    def __init__(self, ax, left=None, bottom=None, right=None, top=None,
+                 coords="data"):
+        """
+        ax : axes instance that will be used to get the data coordinate and etc.
+        left, bottom, right, top: values in the given coordinate. Not changed if None.
+        coord : coordinate system. Coule be 'data', 'axes fraction', etc. Check the annotate function in Matplotlib.
+        """
+        super().__init__()
+        self.ax = ax
+        self.left= left
+        self.bottom = bottom
+        self.right = right
+        self.top = top
+
+        self.coords = coords
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace):
+        gc0 = renderer.new_gc()  # Don't modify gc, but a copy!
+        gc0.copy_properties(gc)
+
+        cliprect = gc0.get_clip_rectangle()
+
+        left, bottom, right, top = cliprect.extents
+
+        tr = TR.get_xy_transform(renderer, self.coords, axes=self.ax)
+
+        left = left if self.left is None else tr.transform_point([self.left, 0])[0]
+        right = right if self.right is None else tr.transform_point([self.right, 0])[0]
+
+        bottom = bottom if self.bottom is None else tr.transform_point([0, self.bottom])[1]
+        top = top if self.top is None else tr.transform_point([0, self.top])[1]
+
+        cliprect0 = Bbox.from_extents(left, bottom, right, top)
+        gc0.set_clip_rectangle(cliprect0)
+
+        return renderer, gc0, tpath, affine, rgbFace
