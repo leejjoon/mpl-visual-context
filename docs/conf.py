@@ -37,8 +37,11 @@ extensions = [
     "sphinx.ext.napoleon",
     "numpydoc",
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.inheritance_diagram',
     'autoapi.sphinx',
+    'matplotlib.sphinxext.plot_directive',
+    'matplotlib.sphinxext.figmpl_directive',
 ]
 
 from sphinx_gallery.sorting import ExplicitOrder

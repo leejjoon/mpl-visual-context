@@ -20,6 +20,8 @@ PathEffects
           StrokeColorFromFillColor() | StrokeOnly()]
     a.set_path_effects(pe)
 
+Check :doc:`userguide-patheffects` for more information.
+
 ImageBox
 ~~~~~~~~
 

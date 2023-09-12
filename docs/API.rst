@@ -2,15 +2,10 @@
 API
 ===
 
-Example Module
----------------
 
-The example module just contains one function - which is just an example
-function to extend matplotlib functionality.
+.. toctree::
+    :maxdepth: 2
 
-.. currentmodule:: mpl_visual_context.example
-.. autosummary::
-   :toctree: autoapi
-   :nosignatures:
-   :recursive:
-
+    api_path_effect
+    api_image_effect
+    api_image_box
