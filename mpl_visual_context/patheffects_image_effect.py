@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib.patheffects import AbstractPathEffect, Normal
 from matplotlib import cbook
+from matplotlib.transforms import Affine2D, TransformedBbox, Bbox, TransformedPath
 
 # from .patheffects import StrokeOnly, GCModify
 
@@ -37,31 +38,62 @@ class ImageEffect(AbstractPathEffect):
         agg_dpi = renderer.dpi  # For the pdf backend, this is the dpi set by
         # the user not the intrinsic 72.
 
-        if hasattr(renderer, "figure"):  # mixed backend. only tested for pdf.
+        mixed_backend = hasattr(renderer, "figure")  # mixed backend. only
+                                                     # tested for pdf.
+
+        if mixed_backend:
             ss = renderer.figure.get_size_inches()
+            # figdpi = renderer._figdpi
             width = ss[0] * agg_dpi
             height = ss[1] * agg_dpi
             scale_factor = agg_dpi / renderer._figdpi
         else:
-            width = renderer.width
-            height = renderer.height
             scale_factor = 1
-        # agg_info = self._get_agg_info(renderer)
+            width = renderer.width * scale_factor
+            height = renderer.height * scale_factor
 
         agg_renderer = RendererAgg(int(width), int(height), agg_dpi)
 
-        # agg_renderer.draw_path(gc, tpath, affine, rgbFace)
-        # gc.set_linewidth(1)
-        from matplotlib.transforms import Affine2D
+        if mixed_backend:
+            new_affine = affine + Affine2D().scale(scale_factor)
 
-        new_affine = affine + Affine2D().scale(scale_factor)
+            # clip_rect and clip_path need to be updated to refelect dpi
+            # change. We may temporarily change the
+            # figure's dpi_scale_trans, but this is not univeral solution.
+
+            gc0 = renderer.new_gc()  # Don't modify gc, but a copy!
+            gc0.copy_properties(gc)
+
+            # We first change clip_rect.
+            cliprect = gc.get_clip_rectangle()
+            left, bottom, right, top = cliprect.extents
+
+            cliprect0 = Bbox.from_extents(left, bottom, right, top)
+            tr = Affine2D().scale(scale_factor)
+            gc0.set_clip_rectangle(TransformedBbox(cliprect0, tr))
+
+            # now, clip_path
+            _tpath, _affine = gc.get_clip_path()
+            if _affine is None:
+                _affine = Affine2D().scale(scale_factor)
+            else:
+                _affine = _affine.frozen().scale(scale_factor)
+
+            if _tpath is not None:
+                gc0.set_clip_path(None)
+
+        else:
+            new_affine = affine
+            gc0 = gc
+
 
         if self._path_effect is not None:
-            self._path_effect.draw_path(agg_renderer, gc, tpath, new_affine, rgbFace)
+            self._path_effect.draw_path(agg_renderer, gc0, tpath, new_affine, rgbFace)
         else:
-            agg_renderer.draw_path(gc, tpath, new_affine, rgbFace)
+            agg_renderer.draw_path(gc0, tpath, new_affine, rgbFace)
 
         orig_img = np.asarray(agg_renderer.buffer_rgba())
+
         slice_y, slice_x = cbook._get_nonzero_slices(orig_img[..., 3])
         cropped_img = orig_img[slice_y, slice_x] / 255.0
 
