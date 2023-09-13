@@ -609,6 +609,10 @@ class ColorBoxLazy(ColorBoxBase):
     def get_color(self):
         return self._color
 
+    def get_alpha(self):
+        rgba = mcolors.to_rgba(self.get_color())
+        return rgba[-1]
+
     def draw(self, renderer):
         if self.get_color() is None:
             raise RuntimeError("color must be set before draw")
