@@ -4,8 +4,12 @@ import matplotlib.transforms as mtransforms
 from matplotlib import colormaps
 
 
-# Adopted from mplcyber
 class Glow(AbstractPathEffect):
+    """
+    Patheffect with glow effect. Adopted from mplcybepunk.
+    Each existing line is redrawn several times with increasing
+    width and low alpha to create the glow effect.
+    """
     def __init__(
         self,
         n_glow_lines: int = 10,
@@ -31,9 +35,6 @@ class Glow(AbstractPathEffect):
 
         gc0.set_alpha(alpha0 * self.alpha_line / self.n_glow_lines)
 
-        # renderer.draw_path(
-        #     gc, tpath, affine, rgbFace)
-
         oo = np.linspace(0, 1, self.n_glow_lines)
 
         for lw, o in zip(linewidths, oo):
@@ -46,6 +47,10 @@ class Glow(AbstractPathEffect):
 
 
 class CmapGlow(AbstractPathEffect):
+    """Patheffect similar to Glow, but with different colors basedon the given
+    colormap.
+
+    """
     def __init__(
         self,
         cmap,

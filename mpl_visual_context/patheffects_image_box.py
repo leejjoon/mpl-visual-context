@@ -9,6 +9,10 @@ from .image_box import get_gradient_array_from_str
 
 
 class FillImage(AbstractPathEffect):
+    """
+    Fill the path with the given image. It actually draws the image with its
+    clip_path set to the path itself.
+    """
     def __init__(self, im, ax=None, remove_from_axes=False, **kwargs):
         """
 

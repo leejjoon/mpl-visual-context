@@ -1,5 +1,5 @@
 Welcome to mpl_visual_context's documentation!
-===================================================================
+==============================================
 
 A collection of tools that provide more visual context to your Matplotlib plots.:
 

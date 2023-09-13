@@ -5,6 +5,9 @@ from .patheffects_base import ChainablePathEffect
 
 
 class Offset(ChainablePathEffect):
+    """
+    PathEffect that offsets the path.
+    """
     def __init__(self, ox, oy):
         super().__init__()
         self._ox = ox

@@ -35,6 +35,11 @@ class ImageEffect(AbstractPathEffect):
         return e
 
     def get_image(self, renderer, gc, tpath, affine, rgbFace):
+        # If the original backend is an agg backedn, a new agg backend with
+        # same dpi will be created. Otherwise, the new agg backednmay have
+        # different dpi than the original one. Thus we need to take care of the
+        # change in the dpi.
+
         agg_dpi = renderer.dpi  # For the pdf backend, this is the dpi set by
         # the user not the intrinsic 72.
 

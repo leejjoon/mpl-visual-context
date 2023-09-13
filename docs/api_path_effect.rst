@@ -32,9 +32,10 @@ Path-related
    Partial
    Smooth
    SmoothFillBetween
+   RoundCorner
 
-Clipt-related
-=============
+Clip-related
+============
 
 .. autosummary::
    :toctree:
@@ -44,8 +45,8 @@ Clipt-related
    ClipPathSelf
    ClipRect
 
-Tranform-related
-================
+Transform-related
+=================
 
 .. autosummary::
    :toctree:
@@ -53,8 +54,18 @@ Tranform-related
 
    Offset
 
-Others
-======
+Multiple Strokes
+================
+
+.. autosummary::
+   :toctree:
+   :nosignatures:
+
+   Glow
+   CmapGlow
+
+ImageBox related
+================
 
 .. autosummary::
    :toctree:
@@ -62,8 +73,14 @@ Others
 
    AlphaGradient
    FillImage
-   Glow
-   CmapGlow
+
+ImageEffect
+===========
+
+.. autosummary::
+   :toctree:
+   :nosignatures:
+
    ImageEffect
 
 API

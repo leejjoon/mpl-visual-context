@@ -120,6 +120,8 @@ motivated by cybepunk style.
 
    plt.show()
 
+* multiple stokes
+
 .. autosummary::
    :toctree:
    :nosignatures:
@@ -134,6 +136,7 @@ ImageBox PathEffect
 We provide PathEffect that actually draws images (not path), most notable
 example is to provide a gradient effect.
 
+ImageBox is a moudule to create a gradient image. 
 
 .. plot::
    :include-source:
