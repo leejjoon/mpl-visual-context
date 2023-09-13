@@ -30,7 +30,7 @@ __all__ = ["HLSModify", "HLSaxb", "ColorMatrix",
            "FillColorFromStrokeColor", "StrokeColorFromFillColor",
            "Partial", "Open", "FillOnly", "StrokeOnly",
            "ClipPathFromPatch", "ClipPathSelf", "ClipRect",
-           "Smooth", "SmoothFillBetween",
+           "Smooth", "SmoothFillBetween", "RoundedCorner",
            "Offset",
            "FillImage", "AlphaGradient",
            "Glow", "CmapGlow",
@@ -62,6 +62,7 @@ from .patheffects_path import (
     ClipRect,
     Smooth,
     SmoothFillBetween,
+    RoundedCorner,
 )
 from .patheffects_transform import Offset
 from .patheffects_image_box import FillImage, AlphaGradient

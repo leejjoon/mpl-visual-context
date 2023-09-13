@@ -225,6 +225,103 @@ class SmoothFillBetween(Smooth):
         return renderer, gc, new_tpath, affine, rgbFace
 
 
+def _get_rounded(v0, v1, v2, dl):
+    x0, y0 = v0
+    x1, y1 = v1
+    x2, y2 = v2
+
+    dx10 = x0 - x1
+    dy10 = y0 - y1
+    dx12 = x2 - x1
+    dy12 = y2 - y1
+    l10 = (dx10*dx10 + dy10*dy10)**.5
+    l12 = (dx12*dx12 + dy12*dy12)**.5
+
+    if l10 < 2*dl:
+        dl10 = l10*0.5
+    else:
+        dl10 = dl
+
+    if l12 < 2*dl:
+        dl12 = l12*0.5
+    else:
+        dl12 = dl
+
+    x10 = x1 + dx10 * dl10 / l10
+    y10 = y1 + dy10 * dl10 / l10
+
+    x12 = x1 + dx12 * dl12 / l12
+    y12 = y1 + dy12 * dl12 / l12
+
+    return [[x10, y10], [x1, y1], [x12, y12]]
+
+
+class RoundedCorner(ChainablePathEffect):
+    def __init__(self, round_size=20, i_selector=None):
+        super().__init__()
+        self.round_size = round_size
+        if i_selector is None:
+            self.i_selector = lambda i: True
+        else:
+            self.i_selector = i_selector
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        tp = affine.transform_path(tpath)
+        codes, vertices = tp.codes, tp.vertices
+        if codes is None:
+            codes = [Path.MOVETO] + [Path.LINETO] * (len(vertices)-1)
+
+        select_i = self.i_selector
+
+        dpi = renderer.dpi  # For the pdf backend, this is the dpi set by
+        dl = self.round_size * dpi / 72
+
+        # FIXME this only works if the path is not broken (CLOSEPOLY|STOP only
+        # at the end). We should refactor the code so that the path is split,
+        # rounded, and merged.
+        c0, v0 = codes[0], vertices[0]
+        v_start = [v0[0], v0[1]] # we may replace its values later
+        cc, vv = [c0], [v_start]
+        for i in range(1, len(codes)-1):
+            c0, c1, c2 = codes[i-1:i+2]
+            v0, v1, v2 = vertices[i-1:i+2]
+            if not (c0 in [Path.MOVETO, Path.LINETO] and
+                    c1 == Path.LINETO and
+                    c2 in [Path.LINETO, Path.CLOSEPOLY, Path.STOP]):
+                cc.append(c1)
+                vv.append(v1)
+
+                if c1 == Path.MOVETO: # to support broken path
+                    v_start = [v1[0], v1[1]]
+                continue
+
+            if select_i(i):
+                ww = _get_rounded(v0, v1, v2, dl)
+
+                vv.extend(ww)
+                cc.extend([Path.LINETO, Path.CURVE3, Path.CURVE3])
+                # curveto : x0, x1, x2
+            else:
+                cc.append(c1)
+                vv.append(v1)
+
+        n = len(codes)
+        c0, c1 = codes[-2:]
+        v0, v1 = vertices[-2:]
+        if (c1 == Path.CLOSEPOLY and select_i(n-11)):
+            ww = _get_rounded(v0, v1, vertices[1], dl)
+            vv.extend(ww)
+            cc.extend([Path.LINETO, Path.CURVE3, Path.CURVE3])
+            v_start[:] = ww[2]
+
+        cc.append(c1)
+        vv.append(v1)
+
+        new_tpath = Path(vertices=vv, codes=cc)
+        new_tr = mtransforms.IdentityTransform()
+        return renderer, gc, new_tpath, new_tr, rgbFace
+
+
 class ClipPathFromPatch(ChainablePathEffect):
     """
     PathEffect that clips the path using a provided patch.
