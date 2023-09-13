@@ -1,9 +1,8 @@
 """
-============
-Rounded Path
-============
+==============
+Rounded Corner
+==============
 
-Adopted from seaborn's timeseries_facets example
 """
 
 from mpl_visual_context.patheffects_image_box import AlphaGradient

@@ -24,6 +24,7 @@ from matplotlib.container import Container
 
 from .mpl_fix import CollectionFix
 
+__all__ = ["ImageBox", "ColorBox", "ColorBoxLazy"]
 
 def _get_window_extent(s, renderer):
     bbox = s.get_window_extent(renderer)
