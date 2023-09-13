@@ -1,10 +1,11 @@
 import numpy as np
+from scipy.interpolate import interp1d
+
 import matplotlib.transforms as mtransforms
 from matplotlib.patheffects import AbstractPathEffect
 from matplotlib.transforms import BboxTransformTo, Bbox, TransformedPath
-from .image_box import ColorBoxLazy
-
-from scipy.interpolate import interp1d
+from .image_box import ImageBox, ColorBoxLazy
+from .image_box import get_gradient_array_from_str
 
 
 class FillImage(AbstractPathEffect):
@@ -36,95 +37,28 @@ class FillImage(AbstractPathEffect):
         self.im = im
 
     def draw_path(self, renderer, gc, tpath, affine, rgbFace):
-        """Draw the path with updated gc."""
 
         self.im.set_clip_path(tpath, transform=affine)
         self.im.draw(renderer)
 
 
-# # # from .image_box_effect import ColorBboxAlpha
-
-# class BboxAlphaPathEffect(AbstractPathEffect):
-#     "BboxAlpha with color from rgbFace"
-#     def __init__(self, alpha,
-#                  extent=None, bbox=None, coords="data", axes=None,
-#                  **im_kw):
-#         self._image_bbox = ColorBox(None, alpha,
-#                                     extent=extent,
-#                                     bbox=bbox, coords=coords,
-#                                     axes=axes,
-#                                     **im_kw)
-
-#     def draw_path(self, renderer, gc, tpath, affine, rgbFace):
-#         rect = gc.get_clip_rectangle()
-#         self._image_bbox.set_clip_box(rect)
-#         pp = mtransforms.TransformedPath(tpath, affine)
-#         self._image_bbox.set_clip_path(pp)
-#         self._image_bbox.set_color(rgbFace)
-#         self._image_bbox.draw(renderer)
-
-
-# class _GradBase():
-#     RESHAPE_TARGET = None
-
-#     def __init__(self, x_or_v, v=None):
-#         if v is None:
-#             self.v = x_or_v
-#             self.x = np.linspace(0, 1, len(self.v))
-#         else:
-#             self.x = x_or_v
-#             self.v = v
-
-#     def get_2d(self):
-#         x = np.linspace(0, 1, 256)
-#         alphas = interp1d(self.x, self.v)(x)
-
-#         return alphas.reshape(self.RESHAPE_TARGET)
-
-
-# class GradH(_GradBase):
-#     RESHAPE_TARGET = (1, -1)
-
-
-# class GradV(_GradBase):
-#     RESHAPE_TARGET = (-1, 1)
-
-
-# def _gradient_from_string(s):
-#     if ">" in s:
-#         alphas = [float(v) for v in s.split(">")]
-#         return GradH(alphas)
-#     elif "^" in s:
-#         alphas = [float(v) for v in s.split("^")]
-#         return GradV(alphas)
-#     else:
-#         raise ValueError()
-
-from .image_box import get_gradient_array_from_str
-
-
-class AlphaGradient(AbstractPathEffect):
-    def __init__(self, alphas, extent=None, bbox=None, coords=None, axes=None, **im_kw):
+class GradientBase(AbstractPathEffect):
+    def __init__(self, extent=None, coords=None):
 
         self.extent = [0, 0, 1, 1] if extent is None else extent
         self.coords = coords
 
-        # if isinstance(alphas, str):
-        #     alphas = get_gradient_array_from_str(alphas)
-        # #     alphas = _gradient_from_string(alphas)
+        # self._image_bbox = ColorBoxLazy(
+        #     alphas, bbox=bbox, coords=coords, axes=axes, **im_kw
+        # )
 
-        # # if hasattr(alphas, "get_2d"):
-        # #     alphas = alphas.get_2d()
-
-        # if len(alphas.shape) != 2:
-        #     raise ValueError()
-
-        self._image_bbox = ColorBoxLazy(
-            alphas, bbox=bbox, coords=coords, axes=axes, **im_kw
-        )
+    def get_image_box(self):
+        pass
 
     def draw_path(self, renderer, gc, tpath, affine, rgbFace):
-        self._image_bbox.set_color(rgbFace)
+        # self._image_bbox.set_color(rgbFace)
+        # image_box = self.get_image_box()
+        image_bbox = self.get_image_box()
         coords = self.coords
         if coords is None:
 
@@ -134,11 +68,70 @@ class AlphaGradient(AbstractPathEffect):
                 bbox = tr.transform_bbox(Bbox.from_extents(self.extent))
                 return bbox
 
-            self._image_bbox.set_coords(affine)
-            self._image_bbox.set_bbox(get_extent)
+            image_bbox.set_coords(affine)
+            image_bbox.set_bbox(get_extent)
 
         rect = gc.get_clip_rectangle()
-        self._image_bbox.set_clip_box(rect)
+        image_bbox.set_clip_box(rect)
         pp = TransformedPath(tpath, affine)
-        self._image_bbox.set_clip_path(pp)
-        self._image_bbox.draw(renderer)
+        image_bbox.set_clip_path(pp)
+        image_bbox.draw(renderer)
+
+
+class Gradient(GradientBase):
+    def __init__(self, data, alpha=None, extent=None, bbox=None, coords=None, axes=None, **im_kw):
+
+        super().__init__(extent=extent, coords=coords)
+
+        self._image_bbox = ImageBox(
+            data, alpha=alpha, bbox=bbox, coords=coords, axes=axes, **im_kw
+        )
+
+    def get_image_box(self):
+        return self._image_bbox
+
+    # def draw_path(self, renderer, gc, tpath, affine, rgbFace):
+    #     # self._image_bbox.set_color(rgbFace)
+    #     # image_box = self.get_image_box()
+    #     super().draw_path(renderer, gc, tpath, affine, rgbFace)
+
+
+class AlphaGradient(GradientBase):
+    """Fill the path with image of the fill color of the path, with
+    varying transparency.
+
+    """
+    def __init__(self, alphas, extent=None, bbox=None, coords=None, axes=None, **im_kw):
+
+        # self.extent = [0, 0, 1, 1] if extent is None else extent
+        # self.coords = coords
+        super().__init__(extent=extent, coords=coords)
+
+        self._image_bbox = ColorBoxLazy(
+            alphas, bbox=bbox, coords=coords, axes=axes, **im_kw
+        )
+
+    def get_image_box(self):
+        return self._image_bbox
+
+    def draw_path(self, renderer, gc, tpath, affine, rgbFace):
+        self._image_bbox.set_color(rgbFace)
+
+        super().draw_path(renderer, gc, tpath, affine, rgbFace)
+        # coords = self.coords
+        # if coords is None:
+
+        #     def get_extent(renderer):
+        #         bbox_out = tpath.get_extents()
+        #         tr = BboxTransformTo(bbox_out)
+        #         bbox = tr.transform_bbox(Bbox.from_extents(self.extent))
+        #         return bbox
+
+        #     self._image_bbox.set_coords(affine)
+        #     self._image_bbox.set_bbox(get_extent)
+
+        # rect = gc.get_clip_rectangle()
+        # self._image_bbox.set_clip_box(rect)
+        # pp = TransformedPath(tpath, affine)
+        # self._image_bbox.set_clip_path(pp)
+        # self._image_bbox.draw(renderer)
