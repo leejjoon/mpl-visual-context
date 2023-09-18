@@ -1,12 +1,12 @@
 """
 ==============
-Rounded Corner
+Round Corner
 ==============
 
 """
 
 from mpl_visual_context.patheffects_image_box import AlphaGradient
-from mpl_visual_context.patheffects import RoundedCorner
+from mpl_visual_context.patheffects import RoundCorner
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patheffects import Normal
@@ -23,7 +23,7 @@ performance = 5 * np.random.rand(n)
 
 bars = ax.bar(x_pos, performance, align='center', alpha=0.7)
 
-pe = [RoundedCorner() | AlphaGradient("up")]
+pe = [RoundCorner() | AlphaGradient("up")]
 for p in bars:
     p.set_path_effects(pe)
 

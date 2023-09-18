@@ -256,7 +256,7 @@ def _get_rounded(v0, v1, v2, dl):
     return [[x10, y10], [x1, y1], [x12, y12]]
 
 
-class RoundedCorner(ChainablePathEffect):
+class RoundCorner(ChainablePathEffect):
     def __init__(self, round_size=20, i_selector=None):
         super().__init__()
         self.round_size = round_size
