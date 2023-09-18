@@ -22,8 +22,10 @@ class Offset(ChainablePathEffect):
 
 
 class Affine(ChainablePathEffect):
-    """PathEffect to skew the path. Note that this is applied before the
-    affine of the path (this was intended to transform the text path)
+    """PathEffect to apply affine trasnform the path. Note that this is applied
+    before the affine of the path (this was intended to transform the text
+    path)
+
     """
     def __init__(self, affine=None):
         super().__init__()
@@ -71,7 +73,7 @@ class PostAffine(Affine):
 
 class Recenter(ChainablePathEffect):
     """
-    PathEffect that offsets the path.
+    PathEffect that apply offsets so that the given points to be zero.
     """
     def __init__(self, axes, ox, oy, coords="data",
                  sign=1):

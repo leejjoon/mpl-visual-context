@@ -53,6 +53,10 @@ Transform-related
    :nosignatures:
 
    Offset
+   Affine
+   Skew
+   PostAffine
+   Recenter
 
 Multiple Strokes
 ================
