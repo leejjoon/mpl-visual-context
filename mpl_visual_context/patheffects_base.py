@@ -57,7 +57,9 @@ class AbstractPathEffect:
 
 class ChainablePathEffect(AbstractPathEffect):
     def __or__(self, other):
-        if isinstance(other, ChainablePathEffect):
+        if isinstance(other, PathEffectTerminated):
+            return PathEffectTerminated(self, other)
+        elif isinstance(other, ChainablePathEffect):
             return ChainedPathEffect(self, other)
         else:
             return PathEffectTerminated(self, other)
@@ -78,9 +80,17 @@ class ChainablePathEffect(AbstractPathEffect):
 class ChainedPathEffect(ChainablePathEffect):
     def __init__(self, pe1: ChainablePathEffect, pe2: ChainablePathEffect):
         if isinstance(pe1, ChainedPathEffect):
-            self._pe_list = pe1._pe_list + [pe2]
+            pe1l = pe1._pe_list
         else:
-            self._pe_list = [pe1, pe2]
+            pe1l = [pe1]
+            # self._pe_list = pe1._pe_list + [pe2]
+        if isinstance(pe2, ChainedPathEffect):
+            pe2l = pe2._pe_list
+            # self._pe_list = [pe1] + pe2._pe_list
+        else:
+            pe2l = [pe2]
+
+        self._pe_list = pe1l + pe2l
 
     def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
         for pe in self._pe_list:
@@ -100,12 +110,19 @@ class PathEffectTerminated(AbstractPathEffect):
     """
 
     def __init__(self, pe1: ChainablePathEffect, pe2: AbstractPathEffect):
+        self._pe_list = []
         if isinstance(pe1, ChainedPathEffect):
-            self._pe_list = pe1._pe_list
+            self._pe_list.extend(pe1._pe_list)
         else:
-            self._pe_list = [pe1]
+            self._pe_list.append(pe1)
 
-        self._pe_final = pe2
+        if isinstance(pe2, PathEffectTerminated):
+            self._pe_list.extend(pe2._pe_list)
+            pe_final = pe2._pe_final
+        else:
+            pe_final = pe2
+
+        self._pe_final = pe_final
 
     def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
         for pe in self._pe_list:
