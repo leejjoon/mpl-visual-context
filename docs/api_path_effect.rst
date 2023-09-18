@@ -76,6 +76,7 @@ ImageBox related
    :nosignatures:
 
    AlphaGradient
+   Gradient
    FillImage
 
 ImageEffect

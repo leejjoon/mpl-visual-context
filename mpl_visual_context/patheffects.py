@@ -32,7 +32,7 @@ __all__ = ["HLSModify", "HLSaxb", "ColorMatrix",
            "ClipPathFromPatch", "ClipPathSelf", "ClipRect",
            "Smooth", "SmoothFillBetween", "RoundCorner",
            "Offset", "Affine", "Skew", "PostAffine", "Recenter",
-           "FillImage", "AlphaGradient",
+           "FillImage", "AlphaGradient", "Gradient",
            "Glow", "CmapGlow",
            "ImageEffect"]
 
@@ -67,10 +67,8 @@ from .patheffects_path import (
 from .patheffects_transform import (Offset,
                                     Affine, Skew, PostAffine,
                                     Recenter)
-from .patheffects_image_box import FillImage, AlphaGradient
+from .patheffects_image_box import FillImage, AlphaGradient, Gradient
 
 # from .pe_cyberfunk import GlowStroke as Glow
 from .patheffects_glow import Glow, CmapGlow
 from .patheffects_image_effect import ImageEffect
-
-

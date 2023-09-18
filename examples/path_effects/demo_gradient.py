@@ -5,12 +5,11 @@ Gradient & AlphaGradient
 
 """
 
-from mpl_visual_context.patheffects_image_box import AlphaGradient
 import numpy as np
 
 import matplotlib.pyplot as plt
 
-from mpl_visual_context.patheffects_image_box import Gradient
+from mpl_visual_context.patheffects import (Gradient, AlphaGradient)
 from mpl_visual_context.patheffects import (StrokeOnly,
                                             StrokeColor, FillColor,
                                             GCModify)

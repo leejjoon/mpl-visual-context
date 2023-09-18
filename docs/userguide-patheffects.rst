@@ -179,6 +179,7 @@ ImageBox is a moudule to create a gradient image.
    :nosignatures:
 
    AlphaGradient
+   Gradient
    FillImage
 
 ImageEffect
