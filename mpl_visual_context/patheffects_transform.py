@@ -37,9 +37,9 @@ class Affine(ChainablePathEffect):
         self.affine.skew_deg(xShear, yShear)
         return self
 
-    def rotate_deg(self, xShear, yShear):
-        affine = self.affine.skew_deg(xShear, yShear)
-        return type(self)(affine)
+    def rotate_deg(self, degrees):
+        self.affine.rotate_deg(degrees)
+        return self
 
     def scale(self, sx, sy=None):
         self.affine.scale(sx, sy)
@@ -89,12 +89,11 @@ class Recenter(ChainablePathEffect):
                           coords=self._coords, sign=-self._sign)
 
     def _convert(self, renderer, gc, tpath, affine, rgbFace):
-        tpath = affine.transform_path(tpath)
 
         tr = TR.get_xy_transform(renderer, self._coords, axes=self._axes)
         ox, oy = tr.transform_point([self._ox, self._oy])
 
-        affine = mtransforms.Affine2D().translate(-self._sign*ox,
-                                                  -self._sign*oy)
+        affine = affine + mtransforms.Affine2D().translate(-self._sign*ox,
+                                                           -self._sign*oy)
 
         return renderer, gc, tpath, affine, rgbFace

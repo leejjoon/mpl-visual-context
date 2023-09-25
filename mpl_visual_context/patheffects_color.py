@@ -113,7 +113,7 @@ class ColorMatrix(ColorModifyStroke):
 class FillColor(ChainablePathEffect):
     """PathEffect to set the fill color"""
     def __init__(self, fillcolor):
-        self._fillcolor = mcolors.to_rgba(fillcolor) if fillcolor else None
+        self._fillcolor = None if fillcolor is None else mcolors.to_rgba(fillcolor)
 
     def _convert(self, renderer, gc, tpath, affine, rgbFace):
 
