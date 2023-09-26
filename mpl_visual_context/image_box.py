@@ -12,7 +12,7 @@ from matplotlib.transforms import (
     IdentityTransform,
 )
 from matplotlib.image import Bbox, BboxImage
-from matplotlib.transforms import TransformedBbox
+from matplotlib.transforms import TransformedBbox, BboxTransformFrom
 
 from .transform_helper import TR
 
@@ -355,6 +355,39 @@ class ImageBox(TransformedBboxBase):
             alpha = self.get_alpha()
 
         return super().to_rgba(x, alpha=alpha, bytes=bytes, norm=norm)
+
+    def pick_color_from_image(self, renderer, xy):
+        """
+        xy in display coordinate. shape of (N, input_dim)
+
+        return the color value at point x, y.
+        """
+
+        tr = TR.get_xy_transform(renderer, self.coords, axes=self.axes)
+        if callable(self.bbox_orig):
+            bbox_orig = self.bbox_orig(renderer)
+        else:
+            bbox_orig = self.bbox_orig
+        trbox = TransformedBbox(bbox_orig, tr)
+
+        # xy = ax.transAxes.transform([[0, 0], [0.5, 0.5], [1, 1]])
+        xy2 = BboxTransformFrom(trbox).transform(xy)
+
+        # we cache the image if not cached.
+        if self._imcache is None:
+            A = self._A
+            self._imcache = self.to_rgba(A, bytes=True, norm=(A.ndim == 2))
+
+        ny, nx = self._imcache.shape[:2]
+
+        ij = (xy2 * [nx, ny]).astype("i")
+
+        # we simply clip the indices between 0 and n-1. Thus the coordinates
+        # outside the box will have a color of nearby pixel, not NA.
+        ij2 = np.clip(ij, [0, 0], [nx-1, ny-1])
+
+        colors = self._imcache[ij2[:, 1], ij2[:, 0]]
+        return colors
 
 
 class ColorBoxBase(ABC, TransformedBboxBase):
