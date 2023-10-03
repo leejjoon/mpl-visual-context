@@ -65,7 +65,10 @@ class MultiColorLine(AbstractPathEffect):
 
         self.image_box.axes = self.axes
         colors = self.image_box.pick_color_from_image(renderer,
-                                                      segmented_xy)
+                                                      segmented_xy) / 255.
+        colors[:, -1] *= gc.get_rgb()[-1]
+        if gc.get_forced_alpha():
+            colors[:, -1] *= gc.get_alpha()
 
         affine0 = mtransforms.IdentityTransform()
 
@@ -74,7 +77,7 @@ class MultiColorLine(AbstractPathEffect):
         gc1 = renderer.new_gc()
         gc1.copy_properties(gc)
 
-        for p, c in zip(segmented_paths, colors/255.):
+        for p, c in zip(segmented_paths, colors):
             gc1.set_foreground(c)
             renderer.draw_path(gc1, p, affine0, None)
 
