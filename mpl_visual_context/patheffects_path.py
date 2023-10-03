@@ -140,7 +140,8 @@ class Smooth(ChainablePathEffect):
         super().__init__()
         self._skip_incompatible = skip_incompatible
 
-    def _make_smooth_path(self, vertices, start_code=Path.MOVETO):
+    @staticmethod
+    def _make_smooth_path(vertices, start_code=Path.MOVETO):
         n = len(vertices)
 
         x = vertices[:, 0]
@@ -403,3 +404,110 @@ class ClipRect(ChainablePathEffect):
         gc0.set_clip_rectangle(cliprect0)
 
         return renderer, gc0, tpath, affine, rgbFace
+
+
+class TextAlongArc(ChainablePathEffect):
+    def __init__(
+            self, R, smooth_line=False, n_split=2
+    ):
+        """
+        smooth_line : try to 
+        """
+        self._smooth_line = smooth_line
+        self.R = R
+        self.n_split = n_split
+
+    @staticmethod
+    def _transform_vertices(v, R, affine):
+        xmin, ymin = np.min(v, axis=0)
+        xmax, ymax = np.max(v, axis=0)
+        xc = 0.5*(xmin + xmax)
+        yc = 0.5*(ymin + ymax)
+        w, h = xmax - xmin, ymax - ymin
+
+        v1 = v - [xc, yc]
+        dx, dy = v1.T
+
+        # Since the path will be modified before affine, we scale the R with
+        # the length of h in the transformed space.
+        xc0, yc0 = affine.transform_point([xc, yc])
+        xc1, yc1 = affine.transform_point([xc+w, yc])
+        xc2, yc2 = affine.transform_point([xc, yc+h])
+        w_, h_ = np.hypot([xc1-xc0, xc2-xc0], [yc1-yc0, yc2-yc0])
+
+        if R is None:
+            # We assume that the tpath + affine is modified such that R is a
+            # distance to zero point from xc, yc.
+            R0 = np.hypot(xc0, yc0)
+            # R0, R1 = np.hypot([xc0, xc1], [yc0, yc1])
+            # aspect = (w_ / w / h_ * h)
+            # aspect = 2
+            # print(aspect)
+            R = R0 / h_ * h
+        else:
+            R = R / h_ * h
+
+        theta = dx / R
+        xn = xc + (R+dy)*np.sin(theta)
+        yn = yc + (R+dy)*np.cos(theta) - R
+
+        v = np.array([xn, yn]).T
+
+        return v
+
+    @classmethod
+    def make_curved(cls, tpath, R, affine, smooth_line=False, n_split=2):
+        # We will split a single staraigh line in to multiple line segments.
+        # Later, we will convert this to a smoothe line.
+        ns = n_split * 3  # Since a line segment will be converted to a
+                               # cubic bezier, we make enough room for it.
+        if smooth_line:
+            indices_to_smooth = []  # list of indices where a line is converted
+                                    # to curve.
+            last_node = None
+            v, c = [], []
+            for v1, c1 in tpath.iter_segments(simplify=False):
+                if c1 == Path.LINETO:
+                    vx = np.linspace(last_node[0], v1[0], ns+1)[1:]
+                    vy = np.linspace(last_node[1], v1[1], ns+1)[1:]
+                    v_ = np.array([vx, vy]).T
+                    v.append(v_)
+                    indices_to_smooth.append(len(c))
+                    # Note that the codes is populated assuming that the
+                    # straight line will be converted to smooth cubic bezier
+                    # curve.
+                    c.extend([Path.CURVE4]*ns)
+                else:
+                    v_ = v1.reshape((-1, 2))
+                    v.append(v_)
+                    c.extend([c1] * len(v_))
+
+                last_node = v1[-2:]
+
+            v = np.vstack(v)
+            codes = np.array(c)
+
+            v = cls._transform_vertices(v, R, affine)
+
+            for i in indices_to_smooth:
+                v1 = v[i-1:i+ns:3]
+                v2, _ = Smooth._make_smooth_path(v1)
+                v[i-1:i+ns] = v2
+
+            path = Path(v, codes=codes)
+
+        else:
+            v = cls._transform_vertices(tpath.vertices, R, affine)
+            path = Path(v, codes=tpath.codes)
+
+        return path
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+
+        if self.R is None or (self.R and np.isfinite(self.R)):
+            tpath = self.make_curved(tpath, self.R, affine,
+                                     smooth_line=self._smooth_line,
+                                     n_split=self.n_split)
+
+        return renderer, gc, tpath, affine, rgbFace
+

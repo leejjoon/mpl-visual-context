@@ -18,10 +18,13 @@ def mpl2bezier(mpl_path, transform=None):
 
     # for c in ci:
     for vv, c in mpl_path.iter_segments(transform=transform,
-                                        simplify=None, snap=False,
+                                        simplify=False, snap=False,
                                         curves=True):
         # vv = vv_.reshape((-1, 2))
         if c == MPath.MOVETO:
+            if len(bezier_current):
+                beziers.append((bezier_current, False)) # set close_poly = False
+                bezier_current = []
             # nodes = [next(vi)]
             last_node = vv
             continue
