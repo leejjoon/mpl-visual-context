@@ -1,21 +1,30 @@
+"""
+====================
+Locator demo
+====================
 
+"""
+
+# adopted from an example in Scientific Visulization book.
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
+from matplotlib.patches import Circle
+from mpl_visual_context.patheffects import Smooth, Affine
 from mpl_visual_context.patheffect_locator import (LocatorForAnn,
                                                    LocatorForIXYAR)
+X = np.linspace(-np.pi, np.pi, 400, endpoint=True)
+C, S = np.cos(X), np.sin(X)
 
-if True:
+def plot_demo(ax, sl=slice(None)):
 
-    fig, axs = plt.subplots(5, 1, num=1, clear=True, figsize=(5, 9))
-    X = np.linspace(-np.pi, np.pi, 400, endpoint=True)
-    # X = np.linspace(-np.pi, np.pi, 4, endpoint=True)
-    C, S = np.cos(X), np.sin(X)
+    l1, = ax.plot(X[sl], C[sl], label="cosine", clip_on=False)
+    l2, = ax.plot(X[sl], S[sl], label="sine", clip_on=False)
 
-    # AX 0
-    ax = axs[0]
-    l1, = ax.plot(X, C, label="cosine", clip_on=False)
-    l2, = ax.plot(X, S, label="sine", clip_on=False)
+    return l1, l2
+
+def demo_ann_in_axes_coordinate(ax):
+    l1, l2 = plot_demo(ax)
 
     ann_kwargs = dict(xy=(0, 0), xytext=(20, 0),
                       # xycoords="data",
@@ -24,9 +33,8 @@ if True:
                       # transform=mtransforms.IdentityTransform(),
                       va="center", ha="left", # size=15,
                       )
-    pe_kwargs = dict(x=0.95,
+    pe_kwargs = dict(x=0.95, # in normalized axes coordinate.
                      coords="axes fraction",
-                     # do_rotate=False,
                      locate_only=True,
                      split_path=False)
 
@@ -37,11 +45,49 @@ if True:
                         **ann_kwargs)
         l.set_path_effects([LocatorForAnn(t, ax, **pe_kwargs)])
 
+def demo_ann_in_data_coordinate(ax):
+    l1, l2 = plot_demo(ax)
 
-    # AX 1
-    ax = axs[1]
-    l1, = ax.plot(X, C, label="cosine", clip_on=False)
-    l2, = ax.plot(X, S, label="sine", clip_on=False)
+    ann_kwargs = dict(xy=(0, 0), xytext=(-20, 10),
+                      xycoords="figure pixels",
+                      textcoords="offset points",
+                      va="center", ha="right", # size=15,
+                      )
+    pe_kwargs = dict(coords="data",
+                     locate_only=True,
+                     split_path=False)
+
+    for l, x in zip([l1, l2], [-0.5*np.pi, 0]):
+        t = ax.annotate(l.get_label(), color=l.get_color(),
+                        arrowprops=dict(arrowstyle="->", shrinkB=5,
+                                        ec=l.get_color(),
+                                        connectionstyle="arc3,rad=-0.3"),
+                        **ann_kwargs)
+        l.set_path_effects([LocatorForAnn(t, ax, x=x, **pe_kwargs)])
+
+def demo_ann_with_angle_and_offset(ax):
+    l1, l2 = plot_demo(ax)
+
+    ann_kwargs = dict(xy=(0, 0), xytext=(0, 0),
+                      xycoords="figure pixels",
+                      textcoords="offset points",
+                      va="center", ha="center", # size=15,
+                      )
+    pe_kwargs = dict(coords="data",
+                     do_rotate=True, do_curve=True,
+                     split_path=False)
+
+    for l, x in zip([l1, l2], [-0.5*np.pi, 0]):
+        t = ax.annotate(l.get_label(), color=l.get_color(),
+                        **ann_kwargs)
+        l_pe = LocatorForAnn(t, ax, x=x, **pe_kwargs)
+        l.set_path_effects([l_pe])
+
+        t_pe = l_pe.new_curved_patheffect()
+        t.set_path_effects([t_pe | Affine().translate(0, 80)])
+
+def demo_ann_with_path_split_and_curved(ax):
+    l1, l2 = plot_demo(ax)
 
     ann_kwargs = dict(xy=(0, 0), xytext=(0, 0),
                       xycoords="figure pixels",
@@ -61,41 +107,37 @@ if True:
         t_pe = l_pe.new_curved_patheffect()
         t.set_path_effects([t_pe])
 
+def demo_ann_with_path_split_and_curved2(ax):
+    # It should also work with any(?) bezier curves
 
-    # AX 2
-    ax = axs[2]
-    l1, = ax.plot(X, C, label="cosine", clip_on=False)
-    l2, = ax.plot(X, S, label="sine", clip_on=False)
+    sl = slice(None, None, 40)
+    l1, l2 = plot_demo(ax, sl=sl)
 
-    ann_kwargs = dict(xy=(0, 0), xytext=(-20, 10),
-                      # xycoords="data",
+    ann_kwargs = dict(xy=(0, 0), xytext=(0, 0),
                       xycoords="figure pixels",
                       textcoords="offset points",
-                      # transform=mtransforms.IdentityTransform(),
-                      va="center", ha="right", # size=15,
+                      va="center", ha="center", # size=15,
                       )
     pe_kwargs = dict(coords="data",
-                     locate_only=True,
-                     # do_rotate=False,
-                     split_path=False)
+                     do_rotate=True, do_curve=True,
+                     split_path=True)
 
-    for l, x in zip([l1, l2], [-0.5*np.pi, 0]):
+    for l, x, s in zip([l1, l2], [-0.5*np.pi, 0], [False, True]):
         t = ax.annotate(l.get_label(), color=l.get_color(),
-                        arrowprops=dict(arrowstyle="->", shrinkB=5,
-                                        ec=l.get_color(),
-                                        connectionstyle="arc3,rad=-0.3"),
                         **ann_kwargs)
-        l.set_path_effects([LocatorForAnn(t, ax, x=x, **pe_kwargs)])
+        l_pe = LocatorForAnn(t, ax, x=x, **pe_kwargs)
+        if s:
+            l.set_path_effects([Smooth() | l_pe])
+        else:
+            l.set_path_effects([l_pe])
 
+        t_pe = l_pe.new_curved_patheffect()
+        t.set_path_effects([t_pe])
 
-    # AX 3
-    ax = axs[3]
-    l1, = ax.plot(X, C, label="cosine", clip_on=False)
-    l2, = ax.plot(X, S, label="sine", clip_on=False)
+def demo_custom(ax):
+    l1, l2 = plot_demo(ax)
 
-    from matplotlib.patches import Circle
-
-    radius = 6
+    radius = 6 # radius of the circe in points
     pe_kwargs = dict(coords="axes fraction", pad=radius,
                      do_rotate=False,
                      split_path=True)
@@ -106,7 +148,7 @@ if True:
         color = l.get_color()
         p = Circle((0, 0), radius, transform=mtransforms.IdentityTransform(),
                    ec=color, fc="none",
-                   zorder=3) # zorder should be higher than l1
+                   zorder=3) # zorder should be higher than l
         ax.add_patch(p)
         t = ax.text(0, 0, c, transform=mtransforms.IdentityTransform(),
                     color=color,
@@ -128,29 +170,22 @@ if True:
         l.set_path_effects([LocatorForIXYAR(cb_ixyar, ax, x=0.1, **pe_kwargs)])
 
 
-    # AX 4
-    ax = axs[4]
-    l1, = ax.plot(X, C, label="cosine", clip_on=False)
-    l2, = ax.plot(X, S, label="sine", clip_on=False)
+def main():
+    fig, axs = plt.subplots(6, 1, num=1, clear=True, figsize=(5, 9))
 
-    from mpl_visual_context.patheffects import Affine
+    demo_ann_in_axes_coordinate(axs[0])
 
-    ann_kwargs = dict(xy=(0, 0), xytext=(0, 0),
-                      xycoords="figure pixels",
-                      textcoords="offset points",
-                      va="center", ha="center", # size=15,
-                      )
-    pe_kwargs = dict(coords="data",
-                     do_rotate=True, do_curve=True,
-                     split_path=False)
+    demo_ann_in_data_coordinate(axs[1])
 
-    for l, x in zip([l1, l2], [-0.5*np.pi, 0]):
-        t = ax.annotate(l.get_label(), color=l.get_color(),
-                        **ann_kwargs)
-        l_pe = LocatorForAnn(t, ax, x=x, **pe_kwargs)
-        l.set_path_effects([l_pe])
+    demo_ann_with_angle_and_offset(axs[2])
 
-        t_pe = l_pe.new_curved_patheffect()
-        t.set_path_effects([t_pe | Affine().translate(0, 80)])
+    demo_ann_with_path_split_and_curved(axs[3])
+
+    demo_ann_with_path_split_and_curved2(axs[4])
+
+    demo_custom(axs[5])
 
     plt.show()
+
+if __name__ == '__main__':
+    main()

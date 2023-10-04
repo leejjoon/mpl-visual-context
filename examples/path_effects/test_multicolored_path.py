@@ -1,3 +1,10 @@
+"""
+====================
+Multicolored line demo
+====================
+
+"""
+
 from mpl_visual_context.patheffects import GCModify, Smooth
 from mpl_visual_context.image_box import ImageBox
 from mpl_visual_context.patheffects_multicolor import MultiColorLine

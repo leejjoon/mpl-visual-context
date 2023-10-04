@@ -1,3 +1,10 @@
+"""
+====================
+PathEffect approach to test-polar.py
+====================
+
+"""
+
 # Modified from text_polar of Scientific Visualisation book.
 from mpl_visual_context.patheffects_base import GCModify
 import numpy as np
