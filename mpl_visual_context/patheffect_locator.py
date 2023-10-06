@@ -4,12 +4,13 @@ import numpy as np
 import bezier
 from scipy.optimize import fminbound
 
-from mpl_visual_context.patheffects_base import ChainablePathEffect
-from mpl_visual_context.transform_helper import TR
-from mpl_visual_context.bezier_helper import mpl2bezier, beziers2mpl
 import matplotlib.transforms as mtransforms
-from bezier import Curve
+from matplotlib.text import Annotation
 from matplotlib.path import Path
+from bezier import Curve
+from .patheffects_base import ChainablePathEffect
+from .transform_helper import TR
+from .bezier_helper import mpl2bezier, beziers2mpl
 
 
 class BezierFindYatX():
@@ -119,8 +120,8 @@ def _maybe_test():  # convert this to test
 
 
 class Locator(ChainablePathEffect):
-    def __init__(self, axes, x, axis="x",
-                 pad=5, coords="data",
+    def __init__(self, axes, xy,
+                 pad=3, coords="data",
                  locate_only=False,
                  split_path=True):
         """
@@ -129,9 +130,23 @@ class Locator(ChainablePathEffect):
         """
         super().__init__()
         self._axes = axes
-        self._x = x
-        # self._y = y
-        self._x_or_y = dict(x=0, y=1)[axis]
+
+        x, y = xy
+        if x is None and y is None:
+            raise ValueError()
+        elif y is None:
+            self._mode = "findYatX"
+            self._x = x
+            self._x_or_y = 0
+        elif x is None:
+            self._mode = "findXatY"
+            self._x = y
+            self._x_or_y = 1
+        else:
+            self._mode = "nearXY"
+            self._x = x
+            self._y = y
+
         self._coords = coords
 
         self._pad = pad
@@ -149,22 +164,52 @@ class Locator(ChainablePathEffect):
     def update_points_list(self, renderer, points_list):
         pass
 
-    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
-        # tp = affine.transform_path(tpath)
+    def locate_point(self, renderer, tp0):
+        if self._mode.startswith("find"):
+            return self.locate_point_at_x(renderer, tp0)
 
+        else:
+            return self.locate_point_near_xy(renderer, tp0)
+
+    def locate_point_near_xy(self, renderer, tp0):
+        tr = TR.get_xy_transform(renderer, self._coords, axes=self._axes)
+        xy = tr.transform_point([self._x, self._y])
+
+        bsl = mpl2bezier(tp0)
+        dist_thresh = 1
+
+        bsl_split_points = [] # index i and and parameter t for bezeir curve.
+        for bs, closed in bsl: # for multiple paths, we iterate over each.
+            starting_points = np.array([b.nodes[:, 0] for b in bs])
+            # print("#", starting_points)
+
+            dist = np.hypot(starting_points[:, 0] - xy[0],
+                            starting_points[:, 1] - xy[1])
+            i = np.argmin(dist)
+            if dist[i] < dist_thresh:
+                # print(i, dist[i])
+                bsl_split_points.append((i, 0.))
+
+        return bsl_split_points
+
+    def locate_point_at_x(self, renderer, tp0):
+        """
+        tp0 : given the path in screen coordinate.
+        we try to locate its intersecting point with x=x.
+        """
+
+        # locate the split points
+
+        # x_or_y : 0 for x axis, 1 for y axis
+        x, x_or_y = self._x, self._x_or_y
 
         tr = TR.get_xy_transform(renderer, self._coords, axes=self._axes)
         # assert tr.is_separable
 
-        # locate the split points
-
-        # We find the splitting point in the self._coords coordinate.
-        # So, we transform the path to the input coord.
-        tp0 = affine.transform_path(tpath)
         tp = tr.inverted().transform_path(tp0)
 
         bsl = mpl2bezier(tp)
-        x_or_y = self._x_or_y  # 0 for x axis, 1 for y axis
+
         bsl_split_points = [] # index i and and parameter t for bezeir curve.
         for bs, closed in bsl: # for multiple paths, we iterate over each.
             # we assume x should be monotonically increasing. Just check if
@@ -175,16 +220,21 @@ class Locator(ChainablePathEffect):
                 bs = [Curve(b.nodes[:, ::-1], b.degree) for b in bs]
 
             xx = [b.nodes[x_or_y][-1] for b in bs]
-            i = np.searchsorted(xx, self._x)
+            i = np.searchsorted(xx, x)
             if 0 < i < len(bs):
-                t_ = finder.find(bs[i].nodes[x_or_y], self._x)  # we only
+                t_ = finder.find(bs[i].nodes[x_or_y], x)  # we only
                                                                 # return 1st t
                 bsl_split_points.append((i, t_[0]))
             else:
                 bsl_split_points.append((None, None))
 
-        # find the clip points.
-        bsl0 = mpl2bezier(tp0)
+        return bsl_split_points
+
+    @staticmethod
+    def split_path(bsl0, bsl_split_points, width, locate_only=True):
+        """
+        bsl0 : in the screen coordinate
+        """
 
         bsl1 = []
         points_list = [] # coordinates of clipped path. Simply, left, center
@@ -195,18 +245,17 @@ class Locator(ChainablePathEffect):
                 bsl1.append((bs, closed))
                 continue
 
+            # FIXME if closed is True, we need to check if the split point is
+            # at the edge and try to wrap the path around.
             x0, y0 = bs[i].evaluate(t).reshape((-1, ))
             points = np.array([[np.nan, np.nan],
                                [x0, y0],
                                [np.nan, np.nan]])
             points_list.append(points)
 
-            if self._locate_only:
+            if locate_only:
                 bsl1.append((bs, closed))
                 continue
-
-            # print(i, x0, y0)
-            width = self.get_width(renderer) * 0.5
 
             def f(i):
                 x, y = bs[i].nodes[:, 0]
@@ -264,8 +313,37 @@ class Locator(ChainablePathEffect):
 
             bsl1.extend([(bs_left, False), (bs_right, False)])
 
+        return bsl1, points_list
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+
+        # locate the split points
+
+        # We find the splitting point in the self._coords coordinate.
+        # So, we transform the path to the input coord.
+        tp0 = affine.transform_path(tpath)
+
+        bsl_split_points = self.locate_point(renderer, tp0)
+
+        # find the clip points in the pixel coordinate.
+        bsl0 = mpl2bezier(tp0)
+
+        # print(i, x0, y0)
+        width = self.get_width(renderer) * 0.5
+
+        # we now try to split the path with the given width. As a result this
+        # will get new path and the splitting points; a list of 3x2 array for
+        # the coordinate of the center and two edges. This can be used to
+        # measure the angle and the curvature.
+        bsl1, points_list = self.split_path(bsl0, bsl_split_points, width,
+                                            locate_only=self._locate_only)
+
+        # do something with the points_list
         self.update_points_list(renderer, points_list)
 
+        # the original path is split only if _split_path is True. The split
+        # path in the screen coordinate for now. We can easily revert it back
+        # to the origin coordinate. Not sure if that is worth it.
         if self._split_path:
             tppl = [beziers2mpl(bs, closed) for bs, closed in bsl1 if bs]
             # we skip the last stop segment.
@@ -279,9 +357,9 @@ class Locator(ChainablePathEffect):
 
 
 class LocatorForIXYARBase(ABC, Locator):
-    def __init__(self, axes, x, pad=5, coords="data",
+    def __init__(self, axes, xy, pad=3, coords="data",
                  do_rotate=True, do_curve=False, **kwargs):
-        super().__init__(axes, x, pad=pad, coords=coords, **kwargs)
+        super().__init__(axes, xy, pad=pad, coords=coords, **kwargs)
         self._do_rotate = do_rotate
         self._do_curve = do_curve
 
@@ -298,6 +376,7 @@ class LocatorForIXYARBase(ABC, Locator):
 
         for i, points in enumerate(points_list):
 
+            inverted = False
             if self._do_rotate:
                 if np.all(np.isfinite(points[0])):
                     left = points[0]
@@ -309,6 +388,10 @@ class LocatorForIXYARBase(ABC, Locator):
                     right = points[1]
                 dx = right[0] - left[0]
                 dy = right[1] - left[1]
+                if dx < 0:
+                    inverted = True
+                    dx = -dx
+                    dy = -dy
                 angle = np.rad2deg(np.arctan2(dy, dx))
             else:
                 angle = None
@@ -324,14 +407,16 @@ class LocatorForIXYARBase(ABC, Locator):
                     R_ = np.abs(c+x)
                     if np.abs(R_) < 1.e3:
                         R = -np.sign(w.imag)*R_
+                        if inverted:
+                            R = -R
 
             self.set_ixyar(i, points[1], angle, R, renderer)
 
 
 class LocatorForIXYAR(LocatorForIXYARBase):
-    def __init__(self, cb_ixyar, axes, x, pad=5, coords="data",
+    def __init__(self, cb_ixyar, axes, xy, pad=3, coords="data",
                  do_rotate=False, do_curve=False, **kwargs):
-        super().__init__(axes, x, pad=pad, coords=coords,
+        super().__init__(axes, xy, pad=pad, coords=coords,
                          do_rotate=do_rotate, do_curve=do_curve,
                          **kwargs)
         self._cb_ixyar = cb_ixyar
@@ -341,27 +426,43 @@ class LocatorForIXYAR(LocatorForIXYARBase):
 
 
 class LocatorForAnn(LocatorForIXYARBase):
-    def __init__(self, ann, axes, x, pad=5, coords="data",
-                 do_rotate=True, do_curve=False, **kwargs):
-        super().__init__(axes, x, pad=pad, coords=coords,
+    def __init__(self, ann, axes, xy, pad=3, coords="data",
+                 do_rotate=True, do_curve=False,
+                 invisible_if_no_intersection=True,
+                 **kwargs):
+        super().__init__(axes, xy, pad=pad, coords=coords,
                          do_rotate=do_rotate, do_curve=do_curve,
                          **kwargs)
         self.ann = ann
+        self.invisible_if_no_intersection = invisible_if_no_intersection
 
         self._pe_list = []
 
     def get_width(self, renderer):
+        angle = self.ann.get_rotation()
         self.ann.set_rotation(0)
         pad2 = super().get_width(renderer)
-        return self.ann.get_window_extent(renderer).width + pad2
+        width = self.ann.get_window_extent(renderer).width + pad2
+        self.ann.set_rotation(angle)
+        return width
 
     def set_ixyar(self, i, xy, angle, R, renderer=None):
         if i < 0:
-            self.ann.set_visible(False)
-        else:
-            self.ann.set_visible(True)
+            if self.invisible_if_no_intersection:
+                self.ann.set_visible(False)
+            return
 
-        self.ann.xy = xy
+        self.ann.set_visible(True)
+
+        if isinstance(self.ann, Annotation):
+            tr = self.ann._get_xy_transform(renderer, self.ann.xycoords)
+            xy = tr.inverted().transform_point(xy)
+
+            self.ann.xy = xy
+        else:
+            xy = self.ann.get_transform().inverted().transform_point(xy)
+
+            self.ann.set_position(xy)
 
         if angle is not None:
             self.ann.set_rotation(angle)

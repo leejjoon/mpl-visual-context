@@ -76,6 +76,7 @@ class ChainablePathEffect(AbstractPathEffect):
         if renderer is not None:
             renderer.draw_path(gc, tpath, affine, rgbFace)
 
+from typing import List
 
 class ChainedPathEffect(ChainablePathEffect):
     def __init__(self, pe1: ChainablePathEffect, pe2: ChainablePathEffect):
@@ -91,6 +92,12 @@ class ChainedPathEffect(ChainablePathEffect):
             pe2l = [pe2]
 
         self._pe_list = pe1l + pe2l
+
+    @classmethod
+    def from_pe_list(cls, pe_list: List[ChainablePathEffect]):
+        self = cls.__new__(cls)
+        self._pe_list = pe_list
+        return self
 
     def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
         for pe in self._pe_list:

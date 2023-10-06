@@ -27,13 +27,11 @@ def demo_ann_in_axes_coordinate(ax):
     l1, l2 = plot_demo(ax)
 
     ann_kwargs = dict(xy=(0, 0), xytext=(20, 0),
-                      # xycoords="data",
-                      xycoords="figure pixels",
                       textcoords="offset points",
                       # transform=mtransforms.IdentityTransform(),
                       va="center", ha="left", # size=15,
                       )
-    pe_kwargs = dict(x=0.95, # in normalized axes coordinate.
+    pe_kwargs = dict(xy=(0.95, None), # in normalized axes coordinate.
                      coords="axes fraction",
                      locate_only=True,
                      split_path=False)
@@ -49,7 +47,6 @@ def demo_ann_in_data_coordinate(ax):
     l1, l2 = plot_demo(ax)
 
     ann_kwargs = dict(xy=(0, 0), xytext=(-20, 10),
-                      xycoords="figure pixels",
                       textcoords="offset points",
                       va="center", ha="right", # size=15,
                       )
@@ -63,13 +60,12 @@ def demo_ann_in_data_coordinate(ax):
                                         ec=l.get_color(),
                                         connectionstyle="arc3,rad=-0.3"),
                         **ann_kwargs)
-        l.set_path_effects([LocatorForAnn(t, ax, x=x, **pe_kwargs)])
+        l.set_path_effects([LocatorForAnn(t, ax, xy=[x, None], **pe_kwargs)])
 
 def demo_ann_with_angle_and_offset(ax):
     l1, l2 = plot_demo(ax)
 
     ann_kwargs = dict(xy=(0, 0), xytext=(0, 0),
-                      xycoords="figure pixels",
                       textcoords="offset points",
                       va="center", ha="center", # size=15,
                       )
@@ -80,7 +76,7 @@ def demo_ann_with_angle_and_offset(ax):
     for l, x in zip([l1, l2], [-0.5*np.pi, 0]):
         t = ax.annotate(l.get_label(), color=l.get_color(),
                         **ann_kwargs)
-        l_pe = LocatorForAnn(t, ax, x=x, **pe_kwargs)
+        l_pe = LocatorForAnn(t, ax, xy=[x, None], **pe_kwargs)
         l.set_path_effects([l_pe])
 
         t_pe = l_pe.new_curved_patheffect()
@@ -90,7 +86,6 @@ def demo_ann_with_path_split_and_curved(ax):
     l1, l2 = plot_demo(ax)
 
     ann_kwargs = dict(xy=(0, 0), xytext=(0, 0),
-                      xycoords="figure pixels",
                       textcoords="offset points",
                       va="center", ha="center", # size=15,
                       )
@@ -101,7 +96,7 @@ def demo_ann_with_path_split_and_curved(ax):
     for l, x in zip([l1, l2], [-0.5*np.pi, 0]):
         t = ax.annotate(l.get_label(), color=l.get_color(),
                         **ann_kwargs)
-        l_pe = LocatorForAnn(t, ax, x=x, **pe_kwargs)
+        l_pe = LocatorForAnn(t, ax, xy=[x, None], **pe_kwargs)
         l.set_path_effects([l_pe])
 
         t_pe = l_pe.new_curved_patheffect()
@@ -114,7 +109,6 @@ def demo_ann_with_path_split_and_curved2(ax):
     l1, l2 = plot_demo(ax, sl=sl)
 
     ann_kwargs = dict(xy=(0, 0), xytext=(0, 0),
-                      xycoords="figure pixels",
                       textcoords="offset points",
                       va="center", ha="center", # size=15,
                       )
@@ -125,7 +119,7 @@ def demo_ann_with_path_split_and_curved2(ax):
     for l, x, s in zip([l1, l2], [-0.5*np.pi, 0], [False, True]):
         t = ax.annotate(l.get_label(), color=l.get_color(),
                         **ann_kwargs)
-        l_pe = LocatorForAnn(t, ax, x=x, **pe_kwargs)
+        l_pe = LocatorForAnn(t, ax, xy=[x, None], **pe_kwargs)
         if s:
             l.set_path_effects([Smooth() | l_pe])
         else:
@@ -167,7 +161,8 @@ def demo_custom(ax):
                 p.set_radius(radius*dpi_cor)
                 t.set_position(xy)
 
-        l.set_path_effects([LocatorForIXYAR(cb_ixyar, ax, x=0.1, **pe_kwargs)])
+        l.set_path_effects([LocatorForIXYAR(cb_ixyar, ax, xy=[0.1, None],
+                                            **pe_kwargs)])
 
 
 def main():
