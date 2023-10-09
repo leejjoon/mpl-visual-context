@@ -30,8 +30,9 @@ from mpl_visual_context.image_box import ImageBox
 from mpl_visual_context.patheffects import Smooth
 from mpl_visual_context.patheffects_multicolor import MultiColorLine
 
-ib = ImageBox("right", cmap="rainbow", coords="axes fraction")
+ib = ImageBox("right", cmap="rainbow", coords="axes fraction",
+              axes=ax)
 for l1 in ax.lines:
-    l1.set_path_effects([Smooth() | MultiColorLine(ax, ib)])
+    l1.set_path_effects([Smooth() | MultiColorLine(ib)])
 
 plt.show()

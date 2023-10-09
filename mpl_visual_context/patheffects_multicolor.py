@@ -6,14 +6,17 @@ from .bezier_helper import mpl2bezier, beziers2mpl
 
 
 class MultiColorLine(AbstractPathEffect):
+    # FIXME This does not seem to work for the pdf backend. Check!
     def __init__(
             self,
-            axes,
             image_box,
             min_length=10,
     ):
+        """The color of lines will be scaled with alpha value of the artist.
+        So, make sure that they are not 0.
+
+        """
         self.image_box = image_box
-        self.axes = axes
         self.min_length = min_length
         # self.close = close # whether to close the path or not
 
@@ -63,12 +66,17 @@ class MultiColorLine(AbstractPathEffect):
         segmented_paths, segmented_xy = self.get_segmented(path,
                                                            min_length=self.min_length)
 
-        self.image_box.axes = self.axes
         colors = self.image_box.pick_color_from_image(renderer,
                                                       segmented_xy) / 255.
-        colors[:, -1] *= gc.get_rgb()[-1]
-        if gc.get_forced_alpha():
+
+        # FIXME It is not clear how to best treat alpha here. If _forced_alpha
+        # is set, we use gc.get_alpha() value, otherwise, we use the last value
+        # of gc.get_rgb()
+        if gc.get_forced_alpha():  # we apply alpha to the colors and later we set
+                                   # _forced_alpha=False so that alpha is not changed later.
             colors[:, -1] *= gc.get_alpha()
+        else:
+            colors[:, -1] *= gc.get_rgb()[3] # we scale the alpha with artist's alpha
 
         affine0 = mtransforms.IdentityTransform()
 
@@ -76,6 +84,7 @@ class MultiColorLine(AbstractPathEffect):
         # better for supported backend.
         gc1 = renderer.new_gc()
         gc1.copy_properties(gc)
+        gc1._forced_alpha = False
 
         for p, c in zip(segmented_paths, colors):
             gc1.set_foreground(c)
