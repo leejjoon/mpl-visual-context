@@ -13,7 +13,8 @@ class FillImage(AbstractPathEffect):
     Fill the path with the given image. It actually draws the image with its
     clip_path set to the path itself.
     """
-    def __init__(self, im, ax=None, remove_from_axes=False, **kwargs):
+    def __init__(self, im, ax=None, remove_from_axes=False, alpha=None,
+                 **kwargs):
         """
 
         Keyword Arguments:
@@ -39,11 +40,16 @@ class FillImage(AbstractPathEffect):
             )
 
         self.im = im
+        self._alpha = alpha
 
     def draw_path(self, renderer, gc, tpath, affine, rgbFace):
 
         self.im.set_clip_path(tpath, transform=affine)
+        alpha_old = self.im.get_alpha()
+        self.im.set_alpha(self._alpha)
         self.im.draw(renderer)
+        self.im.set_alpha(alpha_old)
+        # FIXME we may better recover the clip_path?
 
 
 class GradientBase(AbstractPathEffect):
