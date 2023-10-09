@@ -198,7 +198,8 @@ class TransformedBboxBase(BboxImage):
 
         return bbox_orig
 
-    def __init__(self, extent=None, bbox=None, coords="data", axes=None, **im_kw):
+    def __init__(self, extent=None, bbox=None, coords="data", axes=None,
+                 blend_color=None, **im_kw):
         self.coords = coords
         self.bbox_orig = self._get_bbox_orig(extent, bbox)
         BboxImage.__init__(
@@ -210,6 +211,7 @@ class TransformedBboxBase(BboxImage):
             **im_kw,
         )
         self.axes = axes
+        self._blend_color = blend_color
 
     def set_extent(self, extent, bbox=None):
         self.bbox_orig = self._get_bbox_orig(extent, bbox)
@@ -245,6 +247,22 @@ class TransformedBboxBase(BboxImage):
 
         super().draw(renderer)
 
+    def _make_image(self, A, in_bbox, out_bbox, clip_bbox, magnification=1, unsampled=False, round_to_pixel_border=True):
+        im = super()._make_image(A, in_bbox, out_bbox,
+                                 clip_bbox, magnification, unsampled, round_to_pixel_border)
+
+        if self._blend_color:
+            blend_color = np.array(mcolors.to_rgb(self._blend_color)) * 255
+            d = im[0]
+            alpha = d[..., 3:] / 255
+            # print(alpha)
+            d2  = np.zeros_like(d)
+            d2[..., 3] = 255
+            d2[..., :3] = (d[..., :3] * alpha) + blend_color*(1-alpha)
+            return d2, *im[1:]
+
+        else:
+            return im
 
 class ImageBox(TransformedBboxBase):
     def __init__(
