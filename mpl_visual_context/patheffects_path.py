@@ -53,7 +53,7 @@ class Partial(ChainablePathEffect):
 
         # FIXME It does not support splines yet.
         vertices = vertices[start:stop]
-        codes = codes[start:stop]
+        codes = codes[start:stop].copy()
         codes[0] = tpath.MOVETO
 
         new_tpath = Path._fast_from_codes_and_verts(vertices, codes)
@@ -235,8 +235,11 @@ def _get_rounded(v0, v1, v2, dl):
     dy10 = y0 - y1
     dx12 = x2 - x1
     dy12 = y2 - y1
-    l10 = (dx10*dx10 + dy10*dy10)**.5
-    l12 = (dx12*dx12 + dy12*dy12)**.5
+    l10 = np.hypot(dx10, dy10)
+    l12 = np.hypot(dx12, dy12)
+
+    if l10 == 0 or l12 == 0: # some paths have repeating points. We just skip those.
+        return None
 
     if l10 < 2*dl:
         dl10 = l10*0.5
@@ -296,8 +299,7 @@ class RoundCorner(ChainablePathEffect):
                     v_start = [v1[0], v1[1]]
                 continue
 
-            if select_i(i):
-                ww = _get_rounded(v0, v1, v2, dl)
+            if select_i(i) and (ww := _get_rounded(v0, v1, v2, dl)):
 
                 vv.extend(ww)
                 cc.extend([Path.LINETO, Path.CURVE3, Path.CURVE3])
