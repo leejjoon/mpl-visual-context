@@ -79,7 +79,7 @@ class AlphaAxb(ChainableImageEffect):
     def process_image(self, dpi, scale_factor, x, y, img):
         img2 = img.copy()
         a, b = self.alpha_ab
-        img2[:, :, 3] = a * img2[:, :, 3] + b
+        img2[:, :, 3] = np.clip(a * img2[:, :, 3] + b, 0, 1)
 
         return dpi, scale_factor, x, y, img2
 
