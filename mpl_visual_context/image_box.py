@@ -240,12 +240,44 @@ class TransformedBboxBase(BboxImage):
         trbox = TransformedBbox(bbox_orig, tr)
         self.bbox = trbox
 
-        # if self.axes is None and isinstance(self.coords, Artist):
-        #     axes = self.coords.axes
-        # else:
-        #     axes = self.axes
-
         super().draw(renderer)
+
+    def pick_color_from_image(self, renderer, xy):
+        """
+        xy in display coordinate. shape of (N, input_dim)
+
+        return the color value at point x, y.
+        """
+
+        tr = TR.get_xy_transform(renderer, self.coords, axes=self.axes)
+        if callable(self.bbox_orig):
+            bbox_orig = self.bbox_orig(renderer)
+        else:
+            bbox_orig = self.bbox_orig
+        trbox = TransformedBbox(bbox_orig, tr)
+
+        # xy = ax.transAxes.transform([[0, 0], [0.5, 0.5], [1, 1]])
+        xy2 = BboxTransformFrom(trbox).transform(xy)
+
+        # we cache the image if not cached.
+        if self._imcache is None:
+            A = self._A
+            self._imcache = self.to_rgba(A, bytes=True, norm=(A.ndim == 2))
+            if not(len(A.shape) == 3 and A.shape[-1] == 4):
+                # FIXME to_rgba returns alpha of 1?
+                alpha = self.get_alpha()
+                self._imcache[..., -1] = 255 * (1 if alpha is None else alpha)
+
+        ny, nx = self._imcache.shape[:2]
+
+        ij = (xy2 * [nx, ny]).astype("i")
+
+        # we simply clip the indices between 0 and n-1. Thus the coordinates
+        # outside the box will have a color of nearby pixel, not NA.
+        ij2 = np.clip(ij, [0, 0], [nx-1, ny-1])
+
+        colors = self._imcache[ij2[:, 1], ij2[:, 0]]
+        return colors
 
     def _make_image(self, A, in_bbox, out_bbox, clip_bbox, magnification=1, unsampled=False, round_to_pixel_border=True):
         im = super()._make_image(A, in_bbox, out_bbox,
@@ -264,17 +296,18 @@ class TransformedBboxBase(BboxImage):
         else:
             return im
 
+
 class ImageBox(TransformedBboxBase):
     def __init__(
-        self,
-        data,
-        alpha=None,
-        shape=None,
-        extent=None,
-        bbox=None,
-        coords="data",
-        axes=None,
-        **im_kw,
+            self,
+            data,
+            alpha=None,
+            shape=None,
+            extent=None,
+            bbox=None,
+            coords="data",
+            axes=None,
+            **im_kw,
     ):
         """
         data: 2d-ndarray, directional string (up, down, right, left), interp-string ('0. > 0.5 > 0.)
@@ -297,30 +330,8 @@ class ImageBox(TransformedBboxBase):
         else:
             self.set_data(data)
             self.set_alpha(alpha)
-        # self.set_data(data)
-        # self.set_alpha(alpha)
-        # print(self._A.shape)
-        # self._alpha_array = alpha
-
-    # def make_image(self, renderer, magnification=1.0, unsampled=False):
-    #     v = super().make_image(renderer, magnification=magnification,
-    #                            unsampled=unsampled)
-    #     v[0][:, :, 3] = self._alpha_array
-    #     return v
-    # # docstring inherited
-    # width, height = renderer.get_canvas_width_height()
-    # bbox_in = self.get_window_extent(renderer).frozen()
-    # bbox_in._points /= [width, height]
-    # bbox_out = self.get_window_extent(renderer)
-    # clip = Bbox([[0, 0], [width, height]])
-    # self._transform = BboxTransformTo(clip)
-    # return self._make_image(
-    #     self._A,
-    #     bbox_in, bbox_out, clip, magnification, unsampled=unsampled)
 
     def _convert_data(self, data, alpha=None, shape=None):
-        # if alpha in GRADIENT_DIRECTIONS:
-        #     alpha = get_gradient_array_from_dir(alpha)
         data, alpha = get_data_from_str(data, alpha=alpha, shape=shape)
 
         return data, alpha
@@ -339,7 +350,7 @@ class ImageBox(TransformedBboxBase):
         round_to_pixel_border=True,
     ):
         if not unsampled:
-            return super()._make_image(
+            im = super()._make_image(
                 A,
                 in_bbox,
                 out_bbox,
@@ -348,6 +359,7 @@ class ImageBox(TransformedBboxBase):
                 unsampled=unsampled,
                 round_to_pixel_border=round_to_pixel_border,
             )
+            return im
 
         else:
             # FIXME for unsampled, alpha may not be
@@ -373,39 +385,6 @@ class ImageBox(TransformedBboxBase):
             alpha = self.get_alpha()
 
         return super().to_rgba(x, alpha=alpha, bytes=bytes, norm=norm)
-
-    def pick_color_from_image(self, renderer, xy):
-        """
-        xy in display coordinate. shape of (N, input_dim)
-
-        return the color value at point x, y.
-        """
-
-        tr = TR.get_xy_transform(renderer, self.coords, axes=self.axes)
-        if callable(self.bbox_orig):
-            bbox_orig = self.bbox_orig(renderer)
-        else:
-            bbox_orig = self.bbox_orig
-        trbox = TransformedBbox(bbox_orig, tr)
-
-        # xy = ax.transAxes.transform([[0, 0], [0.5, 0.5], [1, 1]])
-        xy2 = BboxTransformFrom(trbox).transform(xy)
-
-        # we cache the image if not cached.
-        if self._imcache is None:
-            A = self._A
-            self._imcache = self.to_rgba(A, bytes=True, norm=(A.ndim == 2))
-
-        ny, nx = self._imcache.shape[:2]
-
-        ij = (xy2 * [nx, ny]).astype("i")
-
-        # we simply clip the indices between 0 and n-1. Thus the coordinates
-        # outside the box will have a color of nearby pixel, not NA.
-        ij2 = np.clip(ij, [0, 0], [nx-1, ny-1])
-
-        colors = self._imcache[ij2[:, 1], ij2[:, 0]]
-        return colors
 
 
 class ColorBoxBase(ABC, TransformedBboxBase):
@@ -446,10 +425,6 @@ class ColorBoxBase(ABC, TransformedBboxBase):
 
     def _update_A_alpha(self, alpha):
         self._A[..., -1] = (alpha if alpha else 1) * self._alpha_array
-
-    # def draw(self, renderer):
-
-    #     super().draw(renderer)
 
 
 class ColorBox(ColorBoxBase):
