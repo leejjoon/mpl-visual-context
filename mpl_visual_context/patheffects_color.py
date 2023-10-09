@@ -159,3 +159,27 @@ class FillColorFromStrokeColor(ChainablePathEffect):
         rgbFace_new = gc.get_rgb()[:3]
 
         return renderer, gc, tpath, affine, rgbFace_new
+
+
+class BlendAlpha(ChainablePathEffect):
+    """Remove the alpha channel by blending the original color (w/ alpha) with
+    the given backgrond color.
+    """
+    def __init__(self, bg_color):
+        self._bg_color = bg_color
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        gc1 = renderer.new_gc()
+        gc1.copy_properties(gc)
+
+        bg_rgb = np.array(mcolors.to_rgb(self._bg_color))
+
+        rgba_new = gc.get_rgb()
+        rgb_new = np.array(rgba_new[:3])
+        alpha = rgba_new[3]
+        # gc.get_alpha()
+        gc1.set_foreground(rgb_new*alpha + bg_rgb*(1-alpha))
+        gc1.set_alpha(1)
+
+        return renderer, gc1, tpath, affine, rgbFace
+
