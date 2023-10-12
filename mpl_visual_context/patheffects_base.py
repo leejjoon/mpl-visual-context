@@ -166,3 +166,71 @@ class GCModify(ChainablePathEffect):
         gc0 = self._update_gc(gc0, self._gc)
 
         return renderer, gc0, tpath, affine, rgbFace
+
+
+# Clipbaord is experimental.
+
+class ClipboardBase:
+    ATTR_NAMES = ["renderer", "gc", "tpath", "affine", "rgbFace"]
+
+class Clipboard(ClipboardBase):
+
+
+    def __init__(self, renderer=False, gc=True, tpath=True, affine=True, rgbFace=True):
+        _ = dict(renderer=renderer, gc=gc, tpath=tpath, affine=affine,
+                 rgbFace=rgbFace)
+        self.attr_to_store = set(k for k in self.ATTR_NAMES if _.get(k, False))
+
+    def copy(self):
+        return CopyToClipboard(self)
+
+    def paste(self):
+        return PasteFromClipboard(self)
+
+
+class CopyToClipboard(ChainablePathEffect):
+    def __init__(self, clipboard):
+        """
+        clipboard : Clipboard
+        """
+        self.clipboard = clipboard
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        _ = dict(renderer=renderer, gc=gc, tpath=tpath, affine=affine,
+                 rgbFace=rgbFace)
+        for k in self.clipboard.attr_to_store:
+            if k == "affine":
+                self.clipboard[k] = _[k]
+            else:
+                self.clipboard[k] = _[k]
+
+        return renderer, gc, tpath, affine, rgbFace
+
+
+class PasteFromClipboard(ChainablePathEffect):
+    def __init__(self, clipboard):
+        """
+        clipboard : Clipboard
+        """
+        self.clipboard = clipboard
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        _ = dict(renderer=renderer, gc=gc, tpath=tpath, affine=affine,
+                 rgbFace=rgbFace)
+        r = tuple(self.clipboard.get(k, _[k]) for k in self.clipboard.ATTR_NAMES)
+        # self.clipboard.clear()
+        return r
+
+class PasteFrom(ChainablePathEffect, ClipboardBase):
+    def __init__(self, clipboard):
+        """
+        clipboard : dict-like
+        """
+        self.clipboard = clipboard
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        _ = dict(renderer=renderer, gc=gc, tpath=tpath, affine=affine,
+                 rgbFace=rgbFace)
+        r = tuple(self.clipboard.get(k, _[k]) for k in self.ATTR_NAMES)
+        # self.clipboard.clear()
+        return r

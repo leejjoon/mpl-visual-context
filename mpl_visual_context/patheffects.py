@@ -25,7 +25,8 @@ then place the image at the canvas.
 
 """
 
-__all__ = ["HLSModify", "HLSaxb", "ColorMatrix",
+__all__ = ["GCModify", "Clipboard",
+           "HLSModify", "HLSaxb", "ColorMatrix",
            "FillColor", "StrokeColor",
            "FillColorFromStrokeColor", "StrokeColorFromFillColor",
            "Partial", "Open", "FillOnly", "StrokeOnly",
@@ -34,14 +35,15 @@ __all__ = ["HLSModify", "HLSaxb", "ColorMatrix",
            "Offset", "Affine", "Skew", "PostAffine", "Recenter",
            "FillImage", "AlphaGradient", "Gradient",
            "Glow", "CmapGlow",
-           "ImageEffect"]
+           "ImageEffect",
+           ]
 
 from abc import abstractmethod
 from matplotlib.path import Path
 
 from .path_effects_container import PathEffectsContainer
 
-from .patheffects_base import ChainablePathEffect, GCModify
+from .patheffects_base import GCModify, Clipboard
 
 from .patheffects_color import (
     HLSModify,
