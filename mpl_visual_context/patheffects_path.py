@@ -277,8 +277,7 @@ class RoundCorner(ChainablePathEffect):
 
         select_i = self.i_selector
 
-        dpi = renderer.dpi  # For the pdf backend, this is the dpi set by
-        dl = self.round_size * dpi / 72
+        dl = renderer.points_to_pixels(self.round_size) #  * dpi / 72
 
         # FIXME this only works if the path is not broken (CLOSEPOLY|STOP only
         # at the end). We should refactor the code so that the path is split,
