@@ -66,16 +66,17 @@ class ImageEffect(AbstractPathEffect):
             # change. We may temporarily change the
             # figure's dpi_scale_trans, but this is not univeral solution.
 
-            gc0 = renderer.new_gc()  # Don't modify gc, but a copy!
+            gc0 = agg_renderer.new_gc()  # Don't modify gc, but a copy!
             gc0.copy_properties(gc)
 
             # We first change clip_rect.
             cliprect = gc.get_clip_rectangle()
-            left, bottom, right, top = cliprect.extents
+            if cliprect is not None:
+                left, bottom, right, top = cliprect.extents
 
-            cliprect0 = Bbox.from_extents(left, bottom, right, top)
-            tr = Affine2D().scale(scale_factor)
-            gc0.set_clip_rectangle(TransformedBbox(cliprect0, tr))
+                cliprect0 = Bbox.from_extents(left, bottom, right, top)
+                tr = Affine2D().scale(scale_factor)
+                gc0.set_clip_rectangle(TransformedBbox(cliprect0, tr))
 
             # now, clip_path
             _tpath, _affine = gc.get_clip_path()
