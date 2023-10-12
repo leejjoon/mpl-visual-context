@@ -11,13 +11,16 @@ class MultiColorLine(AbstractPathEffect):
             self,
             image_box,
             min_length=10,
+            override_snap=True
     ):
         """The color of lines will be scaled with alpha value of the artist.
         So, make sure that they are not 0.
+        override_snap: set snap to False if True
 
         """
         self.image_box = image_box
         self.min_length = min_length
+        self.override_snap = override_snap
         # self.close = close # whether to close the path or not
 
     def get_segmented(self, path, min_length):
@@ -85,6 +88,8 @@ class MultiColorLine(AbstractPathEffect):
         gc1 = renderer.new_gc()
         gc1.copy_properties(gc)
         gc1._forced_alpha = False
+        if self.override_snap:
+            gc1.set_snap(False)
 
         for p, c in zip(segmented_paths, colors):
             gc1.set_foreground(c)
