@@ -173,7 +173,7 @@ class GCModify(ChainablePathEffect):
 class ClipboardBase:
     ATTR_NAMES = ["renderer", "gc", "tpath", "affine", "rgbFace"]
 
-class Clipboard(ClipboardBase):
+class Clipboard(ClipboardBase, dict):
 
 
     def __init__(self, renderer=False, gc=True, tpath=True, affine=True, rgbFace=True):
