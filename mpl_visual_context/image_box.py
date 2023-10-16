@@ -320,7 +320,8 @@ class ImageBox(TransformedBboxBase):
         self.init_data_n_alpha(data, alpha=alpha, shape=shape)
 
     def init_data_n_alpha(self, data, alpha=None, shape=None):
-        if isinstance(data, np.ndarray) and len(data.shape) == 3 and data.shape[-1] == 3:
+        data, alpha = self._convert_data(data, alpha=alpha, shape=shape)
+        if len(data.shape) == 3 and data.shape[-1] == 3:
             # FIXME MxNx3 image is set, alpha as array is not
             # respected. This is a workaround.
             if alpha is None:
@@ -328,7 +329,6 @@ class ImageBox(TransformedBboxBase):
             data = np.concatenate([data, alpha[:, :, np.newaxis]], axis=-1)
             self.set_data(data)
         else:
-            data, alpha = self._convert_data(data, alpha=alpha, shape=shape)
             self.set_data(data)
             self.set_alpha(alpha)
 
