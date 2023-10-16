@@ -46,7 +46,11 @@ class FillImage(AbstractPathEffect):
 
         self.im.set_clip_path(tpath, transform=affine)
         alpha_old = self.im.get_alpha()
-        self.im.set_alpha(self._alpha)
+        if alpha_old is not None:
+            self.im.set_alpha(alpha_old * (1 if self._alpha is None else self._alpha))
+        else:
+            self.im.set_alpha(self._alpha)
+
         self.im.draw(renderer)
         self.im.set_alpha(alpha_old)
         # FIXME we may better recover the clip_path?
