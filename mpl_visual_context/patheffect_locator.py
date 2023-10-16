@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-import bezier
 from scipy.optimize import fminbound
 
 import matplotlib.transforms as mtransforms
 from matplotlib.text import Annotation
 from matplotlib.path import Path
-from bezier import Curve
+from .bezier_light import Curve
 from .patheffects_base import ChainablePathEffect
 from .transform_helper import TR
 from .bezier_helper import mpl2bezier, beziers2mpl

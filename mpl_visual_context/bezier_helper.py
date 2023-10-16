@@ -1,6 +1,6 @@
 from itertools import cycle, chain
 import numpy as np
-import bezier
+from . import bezier_light as bezier
 from matplotlib.path import Path as MPath
 
 
