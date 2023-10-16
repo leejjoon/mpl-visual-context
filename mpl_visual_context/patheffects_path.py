@@ -512,3 +512,17 @@ class TextAlongArc(ChainablePathEffect):
 
         return renderer, gc, tpath, affine, rgbFace
 
+
+class ClosedPathSelector(ChainablePathEffect):
+    def __init__(self, selector):
+        self._selector = selector
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace=None):
+        idx = np.where(tpath.codes == Path.CLOSEPOLY)
+        code_splits = np.split(tpath.codes, idx[0]+1)
+        vert_splits = np.split(tpath.vertices, idx[0]+1)
+
+        tp = Path(vertices=vert_splits[self._selector],
+                  codes=code_splits[self._selector])
+
+        return renderer, gc, tp, affine, rgbFace
