@@ -1,0 +1,3 @@
+[submodule "mpl_visual_context/bezier_lite"]
+	path = mpl_visual_context/bezier_lite
+	url = https://github.com/leejjoon/bezier_lite.git
