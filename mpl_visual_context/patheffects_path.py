@@ -277,7 +277,7 @@ class RoundCorner(ChainablePathEffect):
 
         select_i = self.i_selector
 
-        dl = renderer.points_to_pixels(self.round_size) #  * dpi / 72
+        dl = renderer.points_to_pixels(self.round_size)
 
         # FIXME this only works if the path is not broken (CLOSEPOLY|STOP only
         # at the end). We should refactor the code so that the path is split,
@@ -319,9 +319,8 @@ class RoundCorner(ChainablePathEffect):
         cc.append(c1)
         vv.append(v1)
 
-        new_tpath = Path(vertices=vv, codes=cc)
-        new_tr = mtransforms.IdentityTransform()
-        return renderer, gc, new_tpath, new_tr, rgbFace
+        new_tpath = affine.inverted().transform_path(Path(vertices=vv, codes=cc))
+        return renderer, gc, new_tpath, affine, rgbFace
 
 
 class ClipPathFromPatch(ChainablePathEffect):
