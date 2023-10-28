@@ -90,10 +90,26 @@ class Recenter(ChainablePathEffect):
 
     def _convert(self, renderer, gc, tpath, affine, rgbFace):
 
-        tr = TR.get_xy_transform(renderer, self._coords, axes=self._axes)
-        ox, oy = tr.transform_point([self._ox, self._oy])
+        is_mixed_backend = hasattr(renderer, "figure")  # mixed backend. only
+                                                        # tested for pdf.
 
-        affine = affine + mtransforms.Affine2D().translate(-self._sign*ox,
-                                                           -self._sign*oy)
+        # This is to better support ImageEffect/Clipboard in pdf backend.
+        if not is_mixed_backend and (self._axes.figure.dpi != renderer.dpi):
+            orig_dpi = self._axes.figure.dpi
+            self._axes.figure.dpi = renderer.dpi
+
+            tr = TR.get_xy_transform(renderer, self._coords, axes=self._axes)
+            ox, oy = tr.transform_point([self._ox, self._oy])
+
+            affine = affine + mtransforms.Affine2D().translate(-self._sign*ox,
+                                                               -self._sign*oy)
+            self._axes.figure.dpi = orig_dpi
+        else:
+            tr = TR.get_xy_transform(renderer, self._coords, axes=self._axes)
+            ox, oy = tr.transform_point([self._ox, self._oy])
+
+            affine = affine + mtransforms.Affine2D().translate(-self._sign*ox,
+                                                               -self._sign*oy)
+
 
         return renderer, gc, tpath, affine, rgbFace
