@@ -100,8 +100,10 @@ class Pad(ChainableImageEffect):
 
     def process_image(self, dpi, scale_factor, x, y, img):
 
+        scale_factor1 = dpi / 72. * scale_factor
+
         padx_, pady_ = self.get_pad()
-        pads = int(padx_ * scale_factor), int(pady_ * scale_factor)
+        pads = int(padx_ * scale_factor1), int(pady_ * scale_factor1)
 
         img_rgb = np.pad(
             img[:, :, :3],
@@ -140,7 +142,8 @@ class ImageConvBase(ChainableImageEffect):
 
     def process_image(self, dpi, scale_factor, x, y, img):
 
-        size = self._get_scaled_size(self.size, scale_factor)
+        scale_factor1 = dpi / 72. * scale_factor
+        size = self._get_scaled_size(self.size, scale_factor1)
         cs = self.channel_slice
         img[..., cs] = self._process_image(img[..., cs], size=size)
 
@@ -236,6 +239,7 @@ class LightSource(LightSourceBase):
         self.gaussian_size = gaussian_size
 
     def get_elev(self, dpi, scale_factor, x, y, img):
+        scale_factor = dpi / 72. * scale_factor
         elev = img[:, :, -1]
 
         size = int(self.erosion_size * scale_factor)
@@ -272,6 +276,7 @@ class LightSourceSharp(LightSourceBase):
         self.dist_min = dist_min
 
     def get_elev(self, dpi, scale_factor, x, y, img):
+        scale_factor = dpi / 72. * scale_factor
         elev = img[:, :, -1]
 
         elev = NI.distance_transform_edt(elev)

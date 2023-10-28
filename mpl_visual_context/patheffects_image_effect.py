@@ -173,6 +173,8 @@ class ImageEffect(AbstractPathEffect, ImageEffectBase):
                 img = np.asarray(img * 255.0, np.uint8)
             renderer.draw_image(gc, x / scale_factor, y / scale_factor, img)
 
+        self.clear()
+
 
 class ImageClipboard(ImageEffectBase):
     def __init__(self):

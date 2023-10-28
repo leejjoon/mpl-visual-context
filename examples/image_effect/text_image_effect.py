@@ -47,19 +47,22 @@ from mpl_visual_context.image_effect import (
     Offset,
 )
 
+import mpl_visual_context.patheffects as pe
 from mpl_visual_context.image_effect import LightSource, LightSourceSharp
 
 
 shadow = ImageEffect(
-    AlphaAxb((0.3, 0)) | Pad(10) | Fill("k") | Dilation(5) | Gaussian(5) | Offset(3, -3)
+    AlphaAxb((0.3, 0)) | Pad(15) | Fill("k") | Dilation(2) | Gaussian(3) | Offset(5, -5)
 )
 
-t1.set_path_effects([shadow, ImageEffect(Pad(10) | LightSource(azdeg=215))])
+t1.set_path_effects([
+    shadow,
+    ImageEffect(Pad(10) | LightSource(azdeg=215))
+])
 
-t2.set_path_effects([shadow, ImageEffect(Pad(10) | LightSourceSharp(azdeg=215))])
-# t1.set_path_effects([
-#     ImageEffect(Pad(10) | Fill("y") | LightSourceFlat() | AlphaAxb((0, 1))),
-#     # ImageEffect(Pad(10) | LightSourceSharp(dist_min=5))
-#     ImageEffect(Pad(10) | LightSource())
-#                      ])
+t2.set_path_effects([
+    shadow,
+    ImageEffect(Pad(10) | LightSourceSharp(azdeg=215))
+])
+
 plt.show()
