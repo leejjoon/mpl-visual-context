@@ -181,5 +181,12 @@ class BlendAlpha(ChainablePathEffect):
         gc1.set_foreground(rgb_new*alpha + bg_rgb*(1-alpha))
         gc1.set_alpha(1)
 
-        return renderer, gc1, tpath, affine, rgbFace
+        if rgbFace is not None:
+            alpha = rgbFace[-1]
+            rgbFace2 = np.ones_like(rgbFace)
+            rgbFace2[:3] = rgbFace[:3]*alpha + bg_rgb[:3]*(1-alpha)
+        else:
+            rgbFace2 = rgbFace
+
+        return renderer, gc1, tpath, affine, rgbFace2
 
