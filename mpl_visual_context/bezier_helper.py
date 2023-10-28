@@ -1,6 +1,10 @@
 from itertools import cycle, chain
 import numpy as np
-from . import bezier_light as bezier
+try:
+    import bezier
+except ImportError:
+    from . import bezier_lite as bezier
+
 from matplotlib.path import Path as MPath
 
 
