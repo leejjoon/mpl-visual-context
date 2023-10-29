@@ -121,3 +121,26 @@ def beziers2mpl(bezier_list, close=True):
     p = MPath(np.hstack(vertices).T, codes=np.hstack(codes))
 
     return p
+
+
+def get_inverted_path(p,
+                      close_poly=True):
+    # M, C3, L = Path.MOVETO, Path.CURVE3, Path.LINETO
+
+    bezier_list = list((b, k) for b, k in p.iter_bezier() if k > 1)
+
+    vertices = [bezier_list[-1][0].control_points[-1]]
+    codes = [MPath.MOVETO]
+
+    for seg, k in reversed(bezier_list):
+        if k == 1: continue
+        vertices.extend(seg.control_points[-2::-1])
+        codes.extend([{2: MPath.LINETO,
+                       3: MPath.CURVE3,
+                       4: MPath.CURVE4}[k]] * seg.degree)
+
+    if close_poly:
+        vertices.append(bezier_list[0][0].control_points[0])
+        codes.append(MPath.CLOSEPOLY)
+
+    return MPath(vertices, codes=codes)
