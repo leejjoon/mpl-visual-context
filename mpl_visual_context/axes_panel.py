@@ -369,7 +369,7 @@ def add_panel(
         # does not work, not sure why.
         ax_host.title.set_visible(False)
 
-    if kind != "title":
+    if kind not in ["title", "empty"]:
         axis.label.set_visible(False)
 
     if kind == "title":
