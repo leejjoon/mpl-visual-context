@@ -1,8 +1,10 @@
+import warnings
 from itertools import cycle, chain
 import numpy as np
 try:
     import bezier
 except ImportError:
+    warnings.warn("bezier module not fount. Using bezier-lite.")
     from . import bezier_lite as bezier
 
 from matplotlib.path import Path as MPath
