@@ -530,8 +530,9 @@ class ClosedPathSelector(ChainablePathEffect):
 
 
 class BarTransformBase(ChainablePathEffect):
-    def __init__(self):
-        pass
+    def __init__(self, orientation="vertical"):
+        assert orientation in ["vertical", "horizontal"]
+        self._orientation = orientation
 
     def _get_width_height(self, tpath, affine):
 
@@ -547,14 +548,24 @@ class BarTransformBase(ChainablePathEffect):
 
     def _get(self, tpath, affine):
         height_vector, width, height = self._get_width_height(tpath, affine)
-        surface = self._get_surface(height/width)
+        if self._orientation == "vertical":
+            surface = self._get_surface(height/width)
+        else:
+            surface = self._get_surface(width/height)
+            surface = Affine2D().rotate_deg(-90).transform_path(surface)
+
+        # _get_surface_transform takes care of the orientation.
         surface_affine = self._get_surface_transform(width, height)
+
 
         return surface, surface_affine + affine, height_vector
 
     def _get_surface_transform(self, width, height):
         # return IdentityTransform()
-        return Affine2D().scale(1, width/height)
+        if self._orientation == "vertical":
+            return Affine2D().scale(1, width/height)
+        else:
+            return Affine2D().scale(height/width, 1)
 
     def _get_surface(self, h):
         """
@@ -591,8 +602,12 @@ class BarTransformBase(ChainablePathEffect):
         # The unit_rectangle has (0, 0) at botton left and (1, 1) at top right.
         # We change the path and affine so that the surface has a center at 0,
         # 0 and that corresponds to the bottom center of the bar.
-        tpath  = Affine2D().translate(-0.5, 0).transform_path(tpath)
-        affine = Affine2D().translate(0.5, 0) + affine
+        if self._orientation == "vertical":
+            tpath  = Affine2D().translate(-0.5, 0).transform_path(tpath)
+            affine = Affine2D().translate(0.5, 0) + affine
+        else:
+            tpath  = Affine2D().translate(0., -0.5).transform_path(tpath)
+            affine = Affine2D().translate(0., 0.5) + affine
 
         surface, affine, height_vector = self._get(tpath, affine)
         # set clip on the col using gc information
