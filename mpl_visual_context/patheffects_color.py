@@ -183,6 +183,7 @@ class BlendAlpha(ChainablePathEffect):
 
         if rgbFace is not None:
             alpha = rgbFace[-1]
+            rgbFace = np.asarray(rgbFace)
             rgbFace2 = np.ones_like(rgbFace)
             rgbFace2[:3] = rgbFace[:3]*alpha + bg_rgb[:3]*(1-alpha)
         else:
