@@ -672,3 +672,29 @@ class BarToArrow(BarTransformBase):
                                              [Path.CLOSEPOLY]]))
 
         return surface
+
+
+class BarToRoundBar(BarTransformBase):
+    def __init__(self, dh=0.5, orientation="vertical"):
+        super().__init__(orientation)
+        self._dh = dh
+
+    def _get_surface(self, height):
+        # For now, the surface should have coordinates of [-0.5, 0] at LLC, and [0.5, h] at TRC.
+
+        h = height
+
+        M, L = Path.MOVETO, Path.LINETO
+        vertices_right = [[0, 0], [0.5, 0], [0.5, h-self._dh]]
+        codes_right = [M, L, L]
+
+        vertices_left = [[-0.5, 0], [0, 0], [0, 0]]
+        codes_left = [L, L, Path.CLOSEPOLY]
+
+        arc = Path.arc(0, 180)
+        vertices_arc = 0.5 * arc.vertices[1:] + [0., h-self._dh]
+        vertices = np.vstack([vertices_right, vertices_arc, vertices_left])
+        codes = np.concatenate([codes_right, arc.codes[1:], codes_left])
+        surface = Path(vertices, codes=codes)
+
+        return surface
