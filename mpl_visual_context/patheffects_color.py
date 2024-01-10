@@ -191,3 +191,21 @@ class BlendAlpha(ChainablePathEffect):
 
         return renderer, gc1, tpath, affine, rgbFace2
 
+
+class ColorFromFunc(ChainablePathEffect):
+    """PathEffect to set the stoke color from a function. The function should
+    take stroke-color and fill color and return new stroke-color and
+    fill-color."""
+    def __init__(self, func):
+        super().__init__()
+        self._func = func
+
+    def _convert(self, renderer, gc, tpath, affine, rgbFace):
+        gc0 = renderer.new_gc()
+        gc0.copy_properties(gc)
+
+        # change the stroke color
+        stroke_color, fill_color = self._func(gc0.get_rgb()[:3], rgbFace)
+        gc0.set_foreground(stroke_color)
+
+        return renderer, gc0, tpath, affine, fill_color

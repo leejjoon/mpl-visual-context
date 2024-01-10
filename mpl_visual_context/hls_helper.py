@@ -54,17 +54,20 @@ class HLSModify_axb:
         self.clip_mode = clip_mode
 
     def apply_to_hls(self, hls, alpha):
-        hls = self.hls_a * hls + self.hls_b
+        h, l, s = self.hls_a * hls + self.hls_b
         alpha = self.alpha_a * alpha + self.alpha_b
 
         if self.clip_mode == "clip":
-            hls = np.clip(hls, 0, 1)
-            alpha = np.clip(alpha, 0, 1)
-        else:
-            hls %= 1
-            alpha %= 1
+            l, s, alpha = np.clip([l, s, alpha], 0, 1)
+            # hls = np.clip(hls, 0, 1)
+            # alpha = np.clip(alpha, 0, 1)
+        # else:
+        #     hls %= 1
+        #     alpha %= 1
 
-        return hls, alpha
+        h %= 1
+
+        return [h, l, s], alpha
 
     def apply_to_color(self, c):
         c_rgba = mcolors.to_rgba(c)

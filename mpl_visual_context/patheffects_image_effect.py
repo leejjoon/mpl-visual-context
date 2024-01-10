@@ -301,6 +301,7 @@ class ClipboardPasteArtist(Artist):
                 img = np.asarray(img * 255.0, np.uint8)
 
             gc = renderer.new_gc()
+            self._set_gc_clip(gc)
             renderer.draw_image(gc, x / scale_factor, y / scale_factor, img)
 
         if self._clear:
@@ -342,6 +343,16 @@ class ReflectionArtist(ClipboardPasteArtist):
             sigma = renderer.points_to_pixels(self._alpha_dist_sigma) * scale
             ee = np.exp(-(dist/sigma)**2)*orig_img[..., 3]/255.*self._alpha_default
             orig_img[..., 3] = (255*ee).astype("uint8")
+        else:
+            slice_y, slice_x = cbook._get_nonzero_slices(orig_img[..., 3])
+            subim = orig_img[slice_y, slice_x, 3] / 255
+            scale = self._clipboard.renderer_prop["scale_factor"]
+
+            ny = subim.shape[0]
+            dist = np.arange(ny)
+            sigma = renderer.points_to_pixels(self._alpha_dist_sigma) * scale
+            ee = np.exp(-(dist[:, np.newaxis]/sigma)**2)*subim*self._alpha_default
+            orig_img[..., 3][slice_y, slice_x] = (255*ee).astype("uint8")
 
         return orig_img
 
