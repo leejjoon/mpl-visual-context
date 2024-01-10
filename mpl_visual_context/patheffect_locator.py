@@ -6,7 +6,7 @@ from scipy.optimize import fminbound
 import matplotlib.transforms as mtransforms
 from matplotlib.text import Annotation
 from matplotlib.path import Path
-from .bezier_light import Curve
+from .bezier_lite import Curve
 from .patheffects_base import ChainablePathEffect
 from .transform_helper import TR
 from .bezier_helper import mpl2bezier, beziers2mpl

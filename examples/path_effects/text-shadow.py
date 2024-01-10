@@ -10,7 +10,7 @@ import numpy as np
 
 from matplotlib.patheffects import Normal
 from mpl_visual_context.patheffects import FillColor, AlphaGradient
-from mpl_poormans_3d.shadow import ShadowPath
+from mpl_visual_context.patheffects_shadow import ShadowPath
 
 import matplotlib.pyplot as plt
 
