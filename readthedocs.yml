@@ -21,3 +21,7 @@ sphinx:
 # python:
 #    install:
 #    - requirements: docs/requirements.txt
+
+submodules:
+  include:
+    - mpl_visual_context/bezier_lite/
