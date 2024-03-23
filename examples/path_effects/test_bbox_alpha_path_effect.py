@@ -14,7 +14,8 @@ seaborn.set()
 tips = seaborn.load_dataset("tips")
 
 fig, ax = plt.subplots(num=1, clear=True)
-seaborn.violinplot(x='day', y='tip', data=tips, ax=ax)
+seaborn.violinplot(x='day', y='tip', data=tips, ax=ax,
+                   hue='day', palette='deep')
 
 from matplotlib.collections import PolyCollection
 # from mpl_visual_context.patheffects_image_bbox import (

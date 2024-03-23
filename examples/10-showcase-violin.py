@@ -18,7 +18,8 @@ tips = seaborn.load_dataset("tips")
 # We start from a simple seaborn violin plot
 fig, axs = plt.subplots(2, 2, num=1, clear=True, figsize=(8, 6), layout="constrained")
 for ax in axs.flat:
-    seaborn.violinplot(x='day', y='tip', data=tips, ax=ax)
+    seaborn.violinplot(x='day', y='tip', data=tips, ax=ax,
+                       hue='day', palette="deep")
 
 ax = axs[0, 0]
 ax.annotate(
@@ -33,8 +34,9 @@ ax.annotate(
 
 # (b) w/ Brighter fill color
 ax = axs[0, 1]
-# We select violin patches.
-colls = ax.collections[::2]
+# We select violin patches. It seems that collections created by violinplot are
+# version dependent. So your mileage may vary.
+colls = ax.collections[::]
 
 
 ax.annotate(
@@ -57,7 +59,7 @@ for x, coll in enumerate(colls):
 
 # (c) AlphaGradient
 ax = axs[1, 0]
-colls = ax.collections[::2]
+colls = ax.collections[::]
 
 ax.annotate(
     "(c) Fill w/ alpha gradient",
@@ -79,7 +81,7 @@ for x, coll in enumerate(colls):
 
 # (4) w/ Light effect
 ax = axs[1, 1]
-colls = ax.collections[::2]
+colls = ax.collections[::]
 
 ax.annotate(
     "(d) Light effect and shadow",
