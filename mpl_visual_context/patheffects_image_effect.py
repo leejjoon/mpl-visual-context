@@ -7,10 +7,10 @@ from matplotlib.transforms import Affine2D, TransformedBbox, Bbox, TransformedPa
 from matplotlib.backends.backend_agg import RendererAgg
 from matplotlib.artist import Artist
 
-from mpl_visual_context.patheffects_base import AbstractPathEffect
-
 from matplotlib.transforms import Affine2D
-from .patheffects_transform import PostAffine
+
+from mpl_visual_context.patheffects_base import AbstractPathEffect
+from mpl_visual_context.patheffects_transform import PostAffine
 
 
 class ImageEffectBase():
@@ -138,7 +138,17 @@ class ImageEffectBase():
 
 
 class ImageEffect(AbstractPathEffect, ImageEffectBase):
-    def __init__(self, image_effect):
+    def __init__(self, image_effect, clip_path_getter=None):
+        """
+
+        clip_path_getter: set the clip_path of the resulting image. Need to be a callable
+        or an object with get_clip_path method, which returns a path and a transform.
+        """
+        if clip_path_getter is None or hasattr(clip_path_getter, "get_clip_path") or callable(clip_path_getter):
+            self._clip_path_getter = clip_path_getter
+        else:
+            raise ValueError("clip_path_getter need to be a callable or an object with get_clip_path method.")
+
         super().__init__()
 
         self._image_effect = image_effect
@@ -167,6 +177,23 @@ class ImageEffect(AbstractPathEffect, ImageEffectBase):
         dpi, scale_factor, x, y, img = self._image_effect.process_image(
             dpi, scale_factor, x, y, img
         )
+
+        if self._clip_path_getter is not None:
+            gc0 = gc
+            gc = renderer.new_gc()  # Don't modify gc, but a copy!
+            gc.copy_properties(gc0)
+
+            if hasattr(self._clip_path_getter, "get_clip_path"):
+                clip_path, affine = self._clip_path_getter.get_clip_path()
+            elif callable(self._clip_path_getter):
+                clip_path, affine = self._clip_path_getter()
+            else:
+                raise ValueError("clip_path_getter need to be a callable or an object with get_clip_path method.")
+
+            pp = TransformedPath(clip_path, affine)
+
+            gc.set_clip_path(pp)
+
 
         if img.size:
             if img.dtype.kind == 'f':
