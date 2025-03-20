@@ -187,6 +187,15 @@ class Clipboard(ClipboardBase, dict):
     def paste(self):
         return PasteFromClipboard(self)
 
+    def get_path(self):
+        tpath = self["tpath"]
+        affine = self["affine"]
+        return affine.transform_path(tpath)
+
+    def get_clip_path(self):
+        clip_path, affine = self["gc"].get_clip_path()
+        return clip_path, affine
+
 
 class CopyToClipboard(ChainablePathEffect):
     def __init__(self, clipboard):
