@@ -202,11 +202,12 @@ class TransformedBboxBase(BboxImage):
                  blend_color=None, **im_kw):
         self.coords = coords
         self.bbox_orig = self._get_bbox_orig(extent, bbox)
+        if "interpolation" not in im_kw:
+            im_kw["interpolation"] = "none"
         BboxImage.__init__(
             self,
             Bbox([[0, 0], [0, 0]]),
             origin="lower",
-            interpolation="none",
             transform=IdentityTransform(),
             **im_kw,
         )

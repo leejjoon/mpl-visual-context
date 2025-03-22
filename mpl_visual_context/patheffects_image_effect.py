@@ -138,11 +138,15 @@ class ImageEffectBase():
 
 
 class ImageEffect(AbstractPathEffect, ImageEffectBase):
-    def __init__(self, image_effect, clip_path_getter=None):
+    def __init__(self, image_effect, clip_path_getter=None,
+                 invisible_if_nill_clip_path=True):
         """
 
         clip_path_getter: set the clip_path of the resulting image. Need to be a callable
         or an object with get_clip_path method, which returns a path and a transform.
+
+        invisible_if_nill_clip_path: if clip_path_getter is used and if it retune a
+        nil path of length 0, do not draw the image. Default is True.
         """
         if clip_path_getter is None or hasattr(clip_path_getter, "get_clip_path") or callable(clip_path_getter):
             self._clip_path_getter = clip_path_getter
@@ -153,6 +157,7 @@ class ImageEffect(AbstractPathEffect, ImageEffectBase):
 
         self._image_effect = image_effect
         self._path_effect = None
+        self._invisible_if_nill_clip_path = invisible_if_nill_clip_path
 
     def __ror__(self, other: AbstractPathEffect):
         e = ImageEffect(self._image_effect)
@@ -189,6 +194,10 @@ class ImageEffect(AbstractPathEffect, ImageEffectBase):
                 clip_path, affine = self._clip_path_getter()
             else:
                 raise ValueError("clip_path_getter need to be a callable or an object with get_clip_path method.")
+
+            if self._invisible_if_nill_clip_path and len(clip_path) == 0:
+                self.clear()
+                return
 
             pp = TransformedPath(clip_path, affine)
 
