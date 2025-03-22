@@ -188,6 +188,8 @@ class Locator(ChainablePathEffect):
             if dist[i] < dist_thresh:
                 # print(i, dist[i])
                 bsl_split_points.append((i, 0.))
+            else:
+                bsl_split_points.append((None, None))
 
         return bsl_split_points
 
@@ -239,14 +241,22 @@ class Locator(ChainablePathEffect):
         points_list = [] # coordinates of clipped path. Simply, left, center
                          # and right points are stored.
 
-        for (bs, closed), (i, t) in zip(bsl0, bsl_split_points):
+        for (bs, closed), (i0, t) in zip(bsl0, bsl_split_points):
             if t is None:
                 bsl1.append((bs, closed))
                 continue
 
             # FIXME if closed is True, we need to check if the split point is
             # at the edge and try to wrap the path around.
-            x0, y0 = bs[i].evaluate(t).reshape((-1, ))
+
+            if len(bs) < 4: # FIXME it seems that if the number of segments is less
+                            # than 3, spliiting fails somehow.
+                continue
+
+            if np.all(bs[0].nodes[:, 0] == bs[-1].nodes[:, -1]):
+                closed = True
+
+            x0, y0 = bs[i0].evaluate(t).reshape((-1, ))
             points = np.array([[np.nan, np.nan],
                                [x0, y0],
                                [np.nan, np.nan]])
@@ -256,28 +266,37 @@ class Locator(ChainablePathEffect):
                 bsl1.append((bs, closed))
                 continue
 
+            N = len(bs)
+            if closed:
+                N2 = N // 2
+            else:
+                N2 = 0
+            i = i0 + N2
+            # to work around cases when the point is near the start and the
+            # end, we try to wrap the curve with bs[N2:] and bs[:N2].
+
+            bs_wrapped = bs[N-N2:] + bs + bs[:]
             def f(i):
-                x, y = bs[i].nodes[:, 0]
+                x, y = bs_wrapped[i].nodes[:, 0]
                 r = np.hypot(x-x0, y-y0) - width
                 return r
 
             # get the reasonable left/right boundary. We do this not to stuck
             # on the local minimum.
-            i_left = i
+            i_left = i0 + N2
             while i_left >= 0 and f(i_left) < 0:
                 i_left -= (i - i_left) + 1
             i_left = max(i_left, 0)
 
-            N = len(bs)
-            i_right = i + 1
-            while i_right < N  and f(i_right) < 0:
+            i_right = i0 + N2 + 1
+            while i_right < N + 2*N and f(i_right) < 0:
                 i_right += (i_right - i)
-            i_right = min(i_right, N)
+            i_right = min(i_right, N + 2*N2 - 1)
 
             # print(i, i_left, i_right)
             def f_abs(xt):
                 i, t = divmod(xt, 1)
-                x, y = bs[int(i)].evaluate(t).reshape((-1,))
+                x, y = bs_wrapped[int(i)].evaluate(t).reshape((-1,))
                 # print(x, y)
                 r = np.abs(np.hypot(x-x0, y-y0) - width)
                 return r
@@ -285,32 +304,55 @@ class Locator(ChainablePathEffect):
             xt_left = fminbound(f_abs, i_left, i+t)
             # print("#", i, t, xt_left, f_abs(xt_left))
             if f_abs(xt_left) > 1:
-                xt_left = 0
+                xt_left = N2
             xt_right = fminbound(f_abs, i+t, i_right)
             if f_abs(xt_right) > 1:
-                xt_right = N
+                xt_right = N+N2
 
-            if xt_left > 0:
-                i_, t = divmod(xt_left, 1)
-                i = int(i_)
-                bs_left = bs[:i] + [bs[i].specialize(0, t)]
-                x, y = bs[i].evaluate(t).reshape((-1,))
-                points[0] = [x, y]
+            # print("xx", xt_left, xt_right)
+            if closed:
+                if xt_left > 0:
+                    i_, t = divmod(xt_left, 1)
+                    i_left = int(i_)
+                    # print("!!!!!!", bs_wrapped[i_left].nodes)
+                    bs_left = [bs_wrapped[i_left].specialize(0., t)]
+                    x, y = bs_wrapped[i_left].evaluate(t).reshape((-1,))
+                    points[0] = [x, y]
+                else:
+                    bs_left = []
+
+                if xt_right < N + 2*N2:
+                    i_, t = divmod(xt_right, 1)
+                    i_right = int(i_)
+                    # print("!!!!!!", bs_wrapped[i_right])
+                    bs_right=  [bs_wrapped[i_right].specialize(t, 1.)] + bs_wrapped[i_right+1:N+i_left]
+                    x, y = bs_wrapped[i_right].evaluate(t).reshape((-1,))
+                    points[2] = [x, y]
+                else:
+                    bs_right = []
+
+                bsl1.extend([(bs_right + bs_left, False)])
+
             else:
-                bs_left = []
-            # if t:
-            #     bs_left.append(bs[i].specialize(0, t))
+                if xt_left > 0:
+                    i_, t = divmod(xt_left, 1)
+                    i = int(i_)
+                    bs_left = bs_wrapped[N2:i] + [bs_wrapped[i].specialize(0, t)]
+                    x, y = bs_wrapped[i].evaluate(t).reshape((-1,))
+                    points[0] = [x, y]
+                else:
+                    bs_left = []
 
-            if xt_right < N:
-                i_, t = divmod(xt_right, 1)
-                i = int(i_)
-                bs_right=  [bs[i].specialize(t, 1)] + bs[i+1:]
-                x, y = bs[i].evaluate(t).reshape((-1,))
-                points[2] = [x, y]
-            else:
-                bs_right = []
+                if xt_right < N + N2:
+                    i_, t = divmod(xt_right, 1)
+                    i = int(i_)
+                    bs_right=  [bs_wrapped[i].specialize(t, 1)] + bs_wrapped[i+1:N+N2]
+                    x, y = bs_wrapped[i].evaluate(t).reshape((-1,))
+                    points[2] = [x, y]
+                else:
+                    bs_right = []
 
-            bsl1.extend([(bs_left, False), (bs_right, False)])
+                bsl1.extend([(bs_left, False), (bs_right, False)])
 
         return bsl1, points_list
 
@@ -334,8 +376,18 @@ class Locator(ChainablePathEffect):
         # will get new path and the splitting points; a list of 3x2 array for
         # the coordinate of the center and two edges. This can be used to
         # measure the angle and the curvature.
-        bsl1, points_list = self.split_path(bsl0, bsl_split_points, width,
-                                            locate_only=self._locate_only)
+        try:
+            k = [i for i, t in bsl_split_points if t is not None]
+            if len(k) != 0:
+                bsl1, points_list = self.split_path(bsl0, bsl_split_points, width,
+                                                    locate_only=self._locate_only)
+            else:
+                return renderer, gc, tpath, affine, rgbFace
+
+        except:
+            print("Error")
+            return renderer, gc, tpath, affine, rgbFace
+
 
         # do something with the points_list
         self.update_points_list(renderer, points_list)
