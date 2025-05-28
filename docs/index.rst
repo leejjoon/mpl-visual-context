@@ -47,7 +47,7 @@ Here's a quick example of how to apply a glow effect to a plotted line, a common
    line, = ax.plot(x, y, linewidth=2, label="My Data")
 
    # Apply a glow effect
-   line.set_path_effects([Glow(alpha_max=0.8, n_glow_lines=10), Normal()])
+   line.set_path_effects([Glow(alpha_line=0.8, n_glow_lines=10), Normal()])
 
    ax.set_title("Plot with Glow Effect")
    ax.legend()
