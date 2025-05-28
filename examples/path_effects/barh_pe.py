@@ -10,12 +10,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Fixing random state for reproducibility
-np.random.seed(19680801)
+def plot_barh_pe():
+    np.random.seed(19680801)
 
-fig, ax = plt.subplots()
+    fig, ax = plt.subplots()
 
-# Example data
-people = ('Tom', 'Dick', 'Harry', 'Slim', 'Jim')
+    # Example data
+    people = ('Tom', 'Dick', 'Harry', 'Slim', 'Jim')
 y_pos = np.arange(len(people))
 performance = 3 + 10 * np.random.rand(len(people))
 error = np.random.rand(len(people))
@@ -43,4 +44,5 @@ for name, p in zip(people, bars.patches):
 # as a line_collection, and it is not straight forward to apply path_effects
 # only to the part of them. So, it it not attempted in this example.
 
-plt.show()
+    plt.close(fig)
+    return fig

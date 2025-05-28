@@ -191,7 +191,7 @@ def demo_custom(ax):
                                             **pe_kwargs)])
 
 
-def main():
+def plot_demo_path_locator():
     fig, axs = plt.subplots(6, 1, num=1, clear=True, figsize=(5, 9))
 
     demo_ann_in_axes_coordinate(axs[0])
@@ -207,7 +207,5 @@ def main():
     demo_custom(axs[5])
 
     fig.tight_layout()
-    plt.show()
-
-if __name__ == '__main__':
-    main()
+    plt.close(fig)
+    return fig

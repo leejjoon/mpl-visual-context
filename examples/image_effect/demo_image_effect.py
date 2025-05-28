@@ -156,10 +156,10 @@ def light_filter_pie(ax):
     ax.add_artist(al)
 
 
-if True:
+def plot_demo_image_effect():
     # if __name__ == "__main__":
 
-    fix, axs = plt.subplots(2, 2, num=1, clear=True)
+    fig, axs = plt.subplots(2, 2, num=1, clear=True)
 
     filtered_text(axs[0, 0])
     drop_shadow_line(axs[0, 1])
@@ -167,4 +167,5 @@ if True:
     light_filter_pie(axs[1, 1])
     axs[1, 1].set_frame_on(True)
 
-    plt.show()
+    plt.close(fig)
+    return fig

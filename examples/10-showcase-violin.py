@@ -11,14 +11,15 @@ import matplotlib.pyplot as plt
 import mpl_visual_context.patheffects as pe
 import seaborn
 
-seaborn.set()
+def plot_violin():
+    seaborn.set()
 
-tips = seaborn.load_dataset("tips")
+    tips = seaborn.load_dataset("tips")
 
-# We start from a simple seaborn violin plot
-fig, axs = plt.subplots(2, 2, num=1, clear=True, figsize=(8, 6), layout="constrained")
-for ax in axs.flat:
-    seaborn.violinplot(x='day', y='tip', data=tips, ax=ax,
+    # We start from a simple seaborn violin plot
+    fig, axs = plt.subplots(2, 2, num=1, clear=True, figsize=(8, 6), layout="constrained")
+    for ax in axs.flat:
+        seaborn.violinplot(x='day', y='tip', data=tips, ax=ax,
                        hue='day', palette="deep")
 
 ax = axs[0, 0]
@@ -115,4 +116,5 @@ pe_list = [
 for x, coll in enumerate(colls):
     coll.set_path_effects(pe_list)
 
-plt.show()
+    plt.close(fig)
+    return fig

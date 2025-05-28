@@ -51,11 +51,12 @@ def plot_ax(ax, x, y):
     return l1, l2
 
 
-if True:
+def plot_simple_gradient():
+    if True:
 
-    fig, axs = plt.subplots(1, 2, num=1, clear=True)
+        fig, axs = plt.subplots(1, 2, num=1, clear=True)
 
-    l1, l2 = plot_ax(axs[0], x, y)
+        l1, l2 = plot_ax(axs[0], x, y)
 
     pe = [FillColorFromStrokeColor() | AlphaGradient("up"), StrokeOnly()]
     l1.set_path_effects(pe)
@@ -70,4 +71,5 @@ if True:
     l1.set_path_effects(pe)
     l2.set_path_effects(pe)
 
-    plt.show()
+    plt.close(fig)
+    return fig

@@ -9,10 +9,11 @@ Motivated by colored-plot.py in Scientific Visualisation book by Np. P. Rougier
 import numpy as np
 import matplotlib.pyplot as plt
 
-fig = plt.figure(figsize=(12, 3), num=1)
-fig.clf()
-fig.patch.set_facecolor("black")
-ax = fig.add_axes([0, 0, 1, 1], frameon=False)
+def plot_demo_multicolor_lines():
+    fig = plt.figure(figsize=(12, 3), num=1)
+    fig.clf()
+    fig.patch.set_facecolor("black")
+    ax = fig.add_axes([0, 0, 1, 1], frameon=False)
 
 # 100 points are enough for us
 X = np.linspace(-5 * np.pi, +5 * np.pi, 100)
@@ -35,4 +36,5 @@ ib = ImageBox("right", cmap="rainbow", coords="axes fraction",
 for l1 in ax.lines:
     l1.set_path_effects([Smooth() | MultiColorLine(ib)])
 
-plt.show()
+    plt.close(fig)
+    return fig

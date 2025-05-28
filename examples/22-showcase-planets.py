@@ -10,22 +10,24 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import cmocean as cmo
 
-sns.set_theme()
-cmap = "cmo.thermal"
-# cmap = "Wistia"
 
-# Load the example planets dataset
-skip_method = [
-    'Pulsation Timing Variations',
-    'Pulsar Timing',
-    'Orbital Brightness Modulation',
-]
+def plot_planets():
+    sns.set_theme()
+    cmap = "cmo.thermal"
+    # cmap = "Wistia"
 
-planets = sns.load_dataset("planets").query(f"method not in {skip_method}")
+    # Load the example planets dataset
+    skip_method = [
+        'Pulsation Timing Variations',
+        'Pulsar Timing',
+        'Orbital Brightness Modulation',
+    ]
 
-fig, ax = plt.subplots(1, 1, num=1, clear=True)
+    planets = sns.load_dataset("planets").query(f"method not in {skip_method}")
 
-k = planets.groupby("method")["distance"].mean().sort_values()
+    fig, ax = plt.subplots(1, 1, num=1, clear=True)
+
+    k = planets.groupby("method")["distance"].mean().sort_values()
 ind = k.dropna().index.values
 
 sns.kdeplot(
@@ -126,4 +128,5 @@ with warnings.catch_warnings():
     warnings.filterwarnings('ignore', r'This figure includes Axes')
     plt.tight_layout(rect=[0, 0, 1, 0.9])
 
-plt.show()
+    plt.close(fig)
+    return fig

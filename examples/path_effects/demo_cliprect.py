@@ -19,10 +19,11 @@ from SecretColors import Palette
 
 # from mpl_visual_context.patheffects import HLSaxb, ColorMatrix
 
-np.random.seed(1)
-fig, ax = plt.subplots(figsize=(8, 4), num=1, clear=True)
+def plot_demo_cliprect():
+    np.random.seed(1)
+    fig, ax = plt.subplots(figsize=(8, 4), num=1, clear=True)
 
-X = np.linspace(0, 1, 500)
+    X = np.linspace(0, 1, 500)
 
 Y0 = np.ones(len(X))
 
@@ -58,7 +59,8 @@ ax.axvline(X[424], color="black", linestyle="--")
 ax.set_xlim(0, 1)
 ax.set_xticks([])
 
-ax.set_ylim(1, 3)
-ax.set_yticks([])
+    ax.set_ylim(1, 3)
+    ax.set_yticks([])
 
-plt.show()
+    plt.close(fig)
+    return fig

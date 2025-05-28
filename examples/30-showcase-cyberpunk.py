@@ -17,15 +17,16 @@ from mpl_visual_context.patheffects_color import StrokeColorFromFillColor
 
 import mplcyberpunk
 
-plt.style.use("cyberpunk")
+def plot_cyberpunk():
+    plt.style.use("cyberpunk")
 
-#* load diamonds datasets
-diamonds = sns.load_dataset("diamonds")
+    #* load diamonds datasets
+    diamonds = sns.load_dataset("diamonds")
 
-#* Plot
-fig, ax = plt.subplots(figsize=(7, 5), num=1, clear=True, layout="constrained")
+    #* Plot
+    fig, ax = plt.subplots(figsize=(7, 5), num=1, clear=True, layout="constrained")
 
-sns.despine(fig)
+    sns.despine(fig)
 
 import numpy as np
 bins = np.logspace(2.5, 4.3, 20)
@@ -247,7 +248,8 @@ ax.title.set_path_effects([
      )
 ])
 
-fig.get_layout_engine().set(w_pad=16 / 72, h_pad=16 / 72)
+    fig.get_layout_engine().set(w_pad=16 / 72, h_pad=16 / 72)
 
-plt.show()
+    plt.close(fig)
+    return fig
 

@@ -15,10 +15,11 @@ from mpl_visual_context.patheffects import (StrokeOnly,
                                             GCModify)
 from matplotlib.patheffects import Normal
 
-fig, ax = plt.subplots(num=1, clear=True)
+def plot_demo_gradient():
+    fig, ax = plt.subplots(num=1, clear=True)
 
-t1 = ax.text(0.5, 0.2, "ImageBox", size=60,
-             color="g", va="center", ha="center")
+    t1 = ax.text(0.5, 0.2, "ImageBox", size=60,
+                 color="g", va="center", ha="center")
 
 t2 = ax.text(0.5, 0.5, "ImageBox", size=60,
              color="g", va="center", ha="center")
@@ -43,4 +44,5 @@ t3.set_path_effects([
     Gradient("right", "up", cmap="rainbow"),
 ])
 
-plt.show()
+    plt.close(fig)
+    return fig

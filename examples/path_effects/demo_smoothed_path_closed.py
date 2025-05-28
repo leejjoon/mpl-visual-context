@@ -19,13 +19,14 @@ import seaborn as sns
 # sns.set_theme(style="darkgrid")
 
 # Load an example dataset with long-form data
-fmri = sns.load_dataset("fmri")
+def plot_demo_smoothed_path_closed():
+    fmri = sns.load_dataset("fmri")
 
-fig, ax = plt.subplots(num=1, clear=True)
-# Plot the responses for different events and regions
-sns.lineplot(x="timepoint", y="signal",
-             hue="region", style="event",
-             data=fmri, ax=ax)
+    fig, ax = plt.subplots(num=1, clear=True)
+    # Plot the responses for different events and regions
+    sns.lineplot(x="timepoint", y="signal",
+                 hue="region", style="event",
+                 data=fmri, ax=ax)
 
 # The code above creates 10 lines. ax.lines[4:] have no data. Not sure what
 # they are.
@@ -35,4 +36,5 @@ for l in ax.lines[:4]:
 for col in ax.collections:
     col.set_path_effects([SmoothFillBetween(skip_first_n=1)])
 
-plt.show()
+    plt.close(fig)
+    return fig

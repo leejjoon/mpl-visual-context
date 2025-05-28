@@ -12,15 +12,16 @@ import numpy as np
 # sns.set_theme()
 import mplcyberpunk
 
-plt.style.use("cyberpunk")
+def plot_barh_cmap():
+    plt.style.use("cyberpunk")
 
-# Fixing random state for reproducibility
-np.random.seed(19680801)
+    # Fixing random state for reproducibility
+    np.random.seed(19680801)
 
-fig, axs = plt.subplots(1, 2, num=1, clear=True, layout="constrained")
+    fig, axs = plt.subplots(1, 2, num=1, clear=True, layout="constrained")
 
-# Example data
-people = ('Tom', 'Dick', 'Harry', 'Slim', 'Jim')
+    # Example data
+    people = ('Tom', 'Dick', 'Harry', 'Slim', 'Jim')
 y_pos = np.arange(len(people))
 performance = 3 + 10 * np.random.rand(len(people))
 error = np.random.rand(len(people))
@@ -56,4 +57,5 @@ pe = [FillImage(bbox_image, ax=ax)]
 for p in bars:
     p.set_path_effects(pe)
 
-plt.show()
+    plt.close(fig)
+    return fig
