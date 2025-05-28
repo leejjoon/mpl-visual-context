@@ -59,7 +59,7 @@ sphinx_gallery_conf = {
     ),
     "gallery_dirs": "examples",  # path to where to save gallery generated output
     "filename_pattern": "/.*",
-    "ignore_pattern": "/_.*",  # https://www.debuggex.com/
+    "ignore_pattern": r"(/_.*|.*test_ignore_.*\.py)",  # Ignore files starting with _ and test_*.py
 }
 
 

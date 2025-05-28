@@ -118,7 +118,7 @@ Achieve striking visual styles like glows or multiple outlines, often inspired b
    l2, = ax.plot([2, 1, 3, 4, 3], "o-", label="Data Line 2")
 
    # Apply Glow (draws multiple faint lines) then Normal (draws the original line on top)
-   glow_effect = [Glow(n_glow_lines=10, alpha_max=0.6, color="cyan"), Normal()]
+   glow_effect = [Glow(n_glow_lines=10, alpha_line=0.6), Normal()]
    for l in [l1, l2]:
        l.set_path_effects(glow_effect)
    ax.legend()
@@ -159,8 +159,8 @@ For instance, ``AlphaGradient`` can be used to create a fill that fades out, whi
 
    l1, = ax.plot(x, y1, marker='o')
    l2, = ax.plot(x, y2, marker='o')
-   p1 = ax.fill_between(x, y1, alpha=0.3, color="magenta") # Base fill for context
-   p2 = ax.fill_between(x, y2, alpha=0.3, color="cyan")    # Base fill for context
+   p1 = ax.fill_between(x, y1, alpha=0.6, color="magenta") # Base fill for context
+   p2 = ax.fill_between(x, y2, alpha=0.6, color="cyan")    # Base fill for context
 
    # Apply Glow to lines
    line_glow = [Glow(n_glow_lines=8), Normal()]
