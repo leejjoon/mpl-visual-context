@@ -10,12 +10,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 sns.set_theme(style="dark")
-flights = sns.load_dataset("flights")
 
-fig, axs = plt.subplots(1, 2, figsize=(8, 4))
+def plot_demo_smoothed_path_simple():
+    flights = sns.load_dataset("flights")
 
-def myplot(ax):
-    sns.lineplot(
+    fig, axs = plt.subplots(1, 2, figsize=(8, 4))
+
+    def myplot(ax):
+        sns.lineplot(
         data=flights, x="month", y="passengers", units="year",
         hue="year",
         estimator=None,
@@ -37,6 +39,7 @@ pe_smooth = Smooth()
 for l in axs[1].lines:
     l.set_path_effects([pe_smooth])
 
-fig.tight_layout()
+    fig.tight_layout()
 
-plt.show()
+    plt.close(fig)
+    return fig

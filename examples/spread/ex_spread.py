@@ -19,11 +19,11 @@ df = pd.DataFrame(dict(x=x, g=g))
 m = df.g.map(ord)
 df["x"] += m
 
+def plot_ex_spread():
+    fig, ax = plt.subplots(1, 1, num=1, clear=True)
 
-fig, ax = plt.subplots(1, 1, num=1, clear=True)
-
-sns.kdeplot(
-    df,
+    sns.kdeplot(
+        df,
     x="x",
     hue="g",
     ax=ax,
@@ -47,6 +47,7 @@ yoffsets = spready(polys, yindices, dy=dy)
 ax.set_ylim(min(yoffsets), max(yoffsets) + dy)
 ax.set_yticks(yoffsets, labels=gg[::-1])
 
-ax.legend_.remove()
+    ax.legend_.remove()
 
-plt.show()
+    plt.close(fig)
+    return fig

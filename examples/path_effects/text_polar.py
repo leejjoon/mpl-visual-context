@@ -14,10 +14,11 @@ from matplotlib.patches import Ellipse
 # Unlike the original code, we will only create a sinlge polar axes, as we will
 # use patheffects which is insensitive of underlying coordinate.
 
-fig = plt.figure(num=1, figsize=(6, 6))
+def plot_text_polar():
+    fig = plt.figure(num=1, figsize=(6, 6))
 
-size = 0.1
-vals = np.ones(12)
+    size = 0.1
+    vals = np.ones(12)
 np.random.seed(123)
 
 # A nice set of colors for seasons
@@ -135,4 +136,5 @@ for t in text_seasons:
     t.set_path_effects([pe_curve2])
     t.get_bbox_patch().set_path_effects([pe_curve2])
 
-plt.show()
+    plt.close(fig)
+    return fig

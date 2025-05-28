@@ -6,11 +6,12 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib.patheffects import Stroke, Normal
 
-fig = plt.figure(figsize=(8, 3), num=1, clear=True)
-ax = fig.add_axes([0, 0, 1, 1], frameon=False)
-family = "Pacifico"
-size = 60
-text = "Matplotlib"
+def plot_text_outline2():
+    fig = plt.figure(figsize=(8, 3), num=1, clear=True)
+    ax = fig.add_axes([0, 0, 1, 1], frameon=False)
+    family = "Pacifico"
+    size = 60
+    text = "Matplotlib"
 
 t = ax.text(
     0.5,
@@ -42,8 +43,9 @@ def get_pe(
     return pe
 
 
-# bp = t.get_bbox_patch()
-bp = None
-t.set_path_effects(get_pe(c0=0.8, max_lw=80, nstep=5, linecolor="k", clippath=bp))
+    # bp = t.get_bbox_patch()
+    bp = None
+    t.set_path_effects(get_pe(c0=0.8, max_lw=80, nstep=5, linecolor="k", clippath=bp))
 
-plt.show()
+    plt.close(fig)
+    return fig

@@ -17,14 +17,16 @@ import matplotlib.pyplot as plt
 red = np.array([233, 77, 85, 255]) / 255
 darkred = np.array([130, 60, 71, 255]) / 255
 
-fig, ax = plt.subplots(num=2, clear=True)
-t = ax.text(0.5, 0.5, "Matplotlib", ha="center", va="center",
-            size=60, color="w", clip_on=True)
-t.set_path_effects([ShadowPath(45, 180) | FillColor(darkred)
+def plot_text_shadow():
+    fig, ax = plt.subplots(num=2, clear=True)
+    t = ax.text(0.5, 0.5, "Matplotlib", ha="center", va="center",
+                size=60, color="w", clip_on=True)
+    t.set_path_effects([ShadowPath(45, 180) | FillColor(darkred)
                     | AlphaGradient("0 ^ 0.1 ^ 0.3 ^ 0.5"),
                     Normal(),
                     ])
 
-ax.patch.set_fc(red)
+    ax.patch.set_fc(red)
 
-plt.show()
+    plt.close(fig)
+    return fig

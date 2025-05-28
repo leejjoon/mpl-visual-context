@@ -9,10 +9,11 @@ Text w/ PathEffects
 import numpy as np
 import matplotlib.pyplot as plt
 
-fig = plt.figure(figsize=(8, 3))
-ax = fig.add_axes([0, 0, 1, 1], frameon=True)
-# family = "Pacifico"
-text = "Matplotlib"
+def plot_text_outline():
+    fig = plt.figure(figsize=(8, 3))
+    ax = fig.add_axes([0, 0, 1, 1], frameon=True)
+    # family = "Pacifico"
+    text = "Matplotlib"
 
 t1 = ax.text(
     0.5,
@@ -55,7 +56,8 @@ pe2 = [
 ]
 
 
-t1.set_path_effects(pe1)
-t2.set_path_effects(pe2)
+    t1.set_path_effects(pe1)
+    t2.set_path_effects(pe2)
 
-plt.show()
+    plt.close(fig)
+    return fig
