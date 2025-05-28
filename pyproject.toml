@@ -49,6 +49,7 @@ doc = [
     "sphinx-gallery>=0.10.0",
     "seaborn",
     "mplcyberpunk",
+    "cmocean",
 ]
 
 # Documentation build configuration
