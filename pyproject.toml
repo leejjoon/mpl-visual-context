@@ -50,6 +50,7 @@ doc = [
     "seaborn",
     "mplcyberpunk",
     "cmocean",
+    "secretcolors",
 ]
 
 # Documentation build configuration
